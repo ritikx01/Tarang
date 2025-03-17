@@ -1,6 +1,6 @@
 import axios from "axios";
 
-interface MarketData {
+export interface MarketData {
   symbol: string;
   priceChange: string;
   priceChangePercent: string;
@@ -22,7 +22,7 @@ interface MarketData {
 async function fetchSymbolList(): Promise<string[]> {
   const TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr";
   try {
-    const response = await axios.get(TICKER_URL);
+    const response = await axios.get<MarketData[]>(TICKER_URL);
     const symbols = response.data
       .filter((item) => !item.symbol.toLowerCase().endsWith("usdc"))
       .map((item: MarketData) => item.symbol.toLowerCase());

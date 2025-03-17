@@ -1,6 +1,6 @@
-import { broadcast } from "..";
-import { BroadcastMessage } from "../controllers/broadcast";
-import { sendToDiscord } from "../controllers/sendToDiscord";
+import { broadcast } from "../index";
+import { BroadcastMessage } from "./broadcast";
+import { sendToDiscord } from "./sendToDiscord";
 import MedianTracker from "./medianTracker";
 
 interface VolumeData {
@@ -85,7 +85,7 @@ class SymbolTracker {
       // console.log(this.emaData);
       // console.log("THIS", symbol, this.emaData[symbol])
       // console.log(symbol, this.emaData)
-      const prevEMA = this.emaData[symbol][period];
+      const prevEMA = this.emaData[symbol][String(period) as keyof EMA] || price;
       const multiplier = 2 / (period + 1);
       const new_ema = (price - prevEMA) * multiplier + prevEMA;
       this.emaData[symbol][String(period) as keyof EMA] = new_ema;
@@ -107,7 +107,7 @@ class SymbolTracker {
   public getMedian(symbol: string) {
     return this.volumeData[symbol].median.getMedian();
   }
-  private calculateTimeDiff(oldUnixTimeInMs, newUnixTimeInMs) {
+  private calculateTimeDiff(oldUnixTimeInMs: number, newUnixTimeInMs: number) {
     const differenceMs = newUnixTimeInMs - oldUnixTimeInMs;
     const fiveMinutePeriods = Math.floor(differenceMs / (5 * 60 * 1000));
     return fiveMinutePeriods;
@@ -171,7 +171,7 @@ class SymbolTracker {
   }
   }
 
-  private storeData(symbol, price, strength) {
+  private storeData(symbol: string, price: number, strength: number) {
     console.log(
       `Buy **${symbol}** at **${price}**.\n**Strength:** ${strength}`
     );
