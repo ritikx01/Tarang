@@ -17,6 +17,7 @@
     "express": "^4.21.2",
     "faiss-node": "^0.5.1",
     "redis": "^4.7.0",
+    "winston": "^3.17.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
