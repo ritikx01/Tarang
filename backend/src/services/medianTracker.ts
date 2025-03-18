@@ -1,41 +1,61 @@
+import {
+  MinPriorityQueue,
+  MaxPriorityQueue,
+} from "@datastructures-js/priority-queue";
+
 class MedianTracker {
-  private lower: number[]; // Max-heap (negated numbers for simulation)
-  private upper: number[]; // Min-heap
+  private lower: MaxPriorityQueue<number>;
+  private upper: MinPriorityQueue<number>;
 
   constructor(numbers: number[]) {
-    const sortedNums = [...numbers].sort((a, b) => a - b);
-    const mid = Math.floor(sortedNums.length / 2);
+    this.lower = new MaxPriorityQueue();
+    this.upper = new MinPriorityQueue();
 
-    // Max-heap for the lower half (negated values)
-    this.lower = sortedNums.slice(0, mid).map((x) => -x);
-    this.heapify(this.lower);
-
-    // Min-heap for the upper half
-    this.upper = sortedNums.slice(mid);
-    this.heapify(this.upper);
-
-    this.balance();
+    numbers.forEach((num) => this.add(num));
   }
 
   private balance(): void {
-    while (this.lower.length > this.upper.length + 1) {
-      this.upper.push(-this.popHeap(this.lower));
-      this.heapify(this.upper);
+    while (this.lower.size() > this.upper.size() + 1) {
+      const value = this.lower.dequeue();
+      if (value !== null) this.upper.enqueue(value);
     }
+  
+    while (this.upper.size() > this.lower.size()) {
+      const value = this.upper.dequeue();
+      if (value !== null) this.lower.enqueue(value);
+    }
+  }
+  
+  
 
-    while (this.upper.length > this.lower.length) {
-      this.lower.push(-this.popHeap(this.upper));
-      this.heapify(this.lower);
+  public add(x: number): void {
+    if (this.lower.isEmpty() || x < this.lower.front()!) {
+      this.lower.enqueue(x);
+    } else {
+      this.upper.enqueue(x);
     }
+    this.balance();
   }
 
   public remove(x: number): boolean {
-    const negX = -x;
+    if (this.lower.isEmpty() && this.upper.isEmpty()) {
+      return false;
+    }
+    
+    if (this.lower.toArray().includes(x)) {
 
-    if (this.removeFromHeap(this.lower, negX)) {
-      this.heapify(this.lower);
-    } else if (this.removeFromHeap(this.upper, x)) {
-      this.heapify(this.upper);
+      const newLower = new MaxPriorityQueue<number>();
+      this.lower.toArray()
+        .filter((num: number) => num !== x)
+        .forEach(num => newLower.enqueue(num));
+      this.lower = newLower;
+    } else if (this.upper.toArray().includes(x)) {
+
+      const newUpper = new MinPriorityQueue<number>();
+      this.upper.toArray()
+        .filter((num: number) => num !== x)
+        .forEach(num => newUpper.enqueue(num));
+      this.upper = newUpper;
     } else {
       return false;
     }
@@ -44,45 +64,14 @@ class MedianTracker {
     return true;
   }
 
-  public add(x: number): void {
-    if (this.lower.length === 0 || x < -this.lower[0]) {
-      this.lower.push(-x);
-      this.heapify(this.lower);
-    } else {
-      this.upper.push(x);
-      this.heapify(this.upper);
+  public getMedian(): number | null {
+    if (this.lower.isEmpty() && this.upper.isEmpty()) {
+      return null;
     }
-
-    this.balance();
-  }
-
-  public getMedian(): number {
-    if (this.lower.length > this.upper.length) {
-      return -this.lower[0];
+    if (this.lower.size() > this.upper.size()) {
+      return this.lower.front();
     }
-
-    return (-this.lower[0] + this.upper[0]) / 2;
-  }
-
-  // Utility methods
-  private heapify(heap: number[]): void {
-    heap.sort((a, b) => a - b); // Simulate heapify
-  }
-
-  private popHeap(heap: number[]): number {
-    if (heap.length === 0) {
-      throw new Error("Heap is empty");
-    }
-    return heap.shift()!;
-  }
-
-  private removeFromHeap(heap: number[], value: number): boolean {
-    const index = heap.indexOf(value);
-    if (index !== -1) {
-      heap.splice(index, 1);
-      return true;
-    }
-    return false;
+    return (this.lower.front()! + this.upper.front()!) / 2;
   }
 }
 

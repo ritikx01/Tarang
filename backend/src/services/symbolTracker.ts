@@ -205,7 +205,7 @@ class SymbolTracker {
     if (volume === 0) {
       return;
     }
-    const curr_median = this.getMedian(symbol);
+    const curr_median = this.getMedian(symbol) ?? openingPrice;
     // Check if candle is bullish or bearish
     //if (curr_median * 3.5 <= volume && closingPrice > openingPrice) {
     if (curr_median * 3.5 <= volume) {
