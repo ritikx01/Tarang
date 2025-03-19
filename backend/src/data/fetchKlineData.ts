@@ -19,8 +19,35 @@ interface Kline {
   ignore: string;
 }
 
-// Type for the array of Klines
-type Klines = Kline[];
+interface KLineData {
+  time: number;
+  symbol: string;
+  data: string[];
+}
+
+type KlineDataPoint = [
+  number, // Open time
+  string, // Open price
+  string, // High price
+  string, // Low price
+  string, // Close price
+  string, // Volume
+  number, // Close time
+  string, // Quote asset volume
+  number, // Number of trades
+  string, // Taker buy base asset volume
+  string, // Taker buy quote asset volume
+  string, // Ignore
+];
+
+const KlineIndex = {
+  openTime: 0,
+  close: 4,
+  volume: 5,
+}
+
+// Interface for the array of Klines
+
 
 async function fetchKlineData(symbols: string[], interval = "5m", limit = 288) {
   try {
@@ -28,12 +55,12 @@ async function fetchKlineData(symbols: string[], interval = "5m", limit = 288) {
       `Fetching kline data for ${symbols.length}. Interval: ${interval} and Limit: ${limit}`,
     );
     const requests = symbols.map((symbol) =>
-      axios.get<Klines>(KLINE_URL, {
+      axios.get<KlineDataPoint[]>(KLINE_URL, {
         params: { symbol, interval, limit: limit + 1 },
       }),
     );
     const responses = await Promise.all(requests);
-    const time = responses[0].data.at(-1)?.openTime;
+    const time = responses[0].data.at(-1)?.[0];
     if (!time) {
       throw new Error("Invalid timestamp in response data");
     }
@@ -41,8 +68,8 @@ async function fetchKlineData(symbols: string[], interval = "5m", limit = 288) {
       response.data.pop();
       return {
         symbol: symbols[index],
-        volumes: response.data.map((item) => Number(item.volume)),
-        closingPrices: response.data.map((item) => Number(item.close)),
+        volumes: response.data.map((item) => Number(item[5])),
+        closingPrices : response.data.map((item) => Number(item[4])),
       };
     });
 
