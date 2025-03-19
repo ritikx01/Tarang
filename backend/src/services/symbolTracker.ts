@@ -62,11 +62,11 @@ class SymbolTracker {
     });
     console.log("Sent to WS");
   }
-  public initEMA(symbol: string, prices: number[]) {
+  public initEMA(symbol: string, closingPrices: number[]) {
     const periods = [9, 15, 100];
     for (const period of periods) {
-      let new_ema = prices.slice(0, period).reduce((a, b) => a + b, 0) / period;
-      for (const price of prices.slice(period)){
+      let new_ema = closingPrices.slice(0, period).reduce((a, b) => a + b, 0) / period;
+      for (const price of closingPrices.slice(period)){
         const prevEMA = new_ema
         const multiplier = 2 / (period + 1);
         new_ema = (price - prevEMA) * multiplier + prevEMA;
@@ -82,9 +82,6 @@ class SymbolTracker {
   public addEMA(symbol: string, price: number) {
     const periods = [9, 15, 100];
     for (const period of periods) {
-      // console.log(this.emaData);
-      // console.log("THIS", symbol, this.emaData[symbol])
-      // console.log(symbol, this.emaData)
       const prevEMA = this.emaData[symbol][String(period) as keyof EMA] || price;
       const multiplier = 2 / (period + 1);
       const new_ema = (price - prevEMA) * multiplier + prevEMA;

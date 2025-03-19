@@ -23,7 +23,7 @@ async function fetchData() {
   const symbolTracker = new SymbolTracker(klineData.time); //Pass time as argument
   klineData.data.forEach((item) => {
     symbolTracker.createMedian(item.symbol, item.volumes);
-    symbolTracker.initEMA(item.symbol, item.closing);
+    symbolTracker.initEMA(item.symbol, item.closingPrices);
   });
   const fetchKlineStream = new FetchKlineStream(
     symbols,
