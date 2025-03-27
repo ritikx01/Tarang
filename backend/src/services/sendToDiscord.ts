@@ -1,6 +1,10 @@
-import { DiscordSignal } from "../services/symbolTracker";
 import logger from "../utils/logger";
 
+export interface DiscordSignal {
+  name: string;
+  value: string;
+  inline: boolean;
+}
 export async function sendToDiscord(data: DiscordSignal[]) {
   // console.log("For discord", symbol, price, strength);
   try {
@@ -20,7 +24,7 @@ export async function sendToDiscord(data: DiscordSignal[]) {
             },
           ],
         }),
-      },
+      }
     );
     if (!response.ok) {
       throw new Error(`Discord API responded with status ${response.status}`);
