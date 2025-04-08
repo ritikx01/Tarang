@@ -64,8 +64,7 @@ class MarketDataManager {
 
   public async initializeMarketDataManager() {
     try {
-      let symbols = await fetchSymbolList();
-      const insufficientSymbols: string[] = [];
+      const symbols = await fetchSymbolList();
       const count = symbols.length;
       logger.info(
         `Successfully fetched symbol list containing ${count} symbols`
@@ -89,13 +88,6 @@ class MarketDataManager {
               timeframe as Timeframe,
               fetchCandleCount
             );
-            if (klineData.openingTimestamps.length === 0) {
-              logger.warn(
-                `No data returned for ${symbol} ${timeframe}. Skipping symbol.`
-              );
-              insufficientSymbols.push(symbol);
-              continue;
-            }
             logger.info(
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
@@ -124,7 +116,6 @@ class MarketDataManager {
           }
         }
       }
-      symbols = symbols.filter((val) => !insufficientSymbols.includes(val));
       this.fetchklineStream.initWebsocket(
         symbols,
         Object.keys(timeframeCandleMapping) as Timeframe[]

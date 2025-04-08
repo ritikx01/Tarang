@@ -1,26 +1,26 @@
-const PERIODS = [9, 15, 100];
 import logger from "../utils/logger";
 
-export interface EMAData {
+const LENGTHS = [9, 15, 100];
+const largest = 3 * Math.max(...LENGTHS);
+
+interface EMAPeriod {
   "9"?: number;
   "15": number;
   "100": number;
 }
 
 class EMATracker {
-  private emaData: EMAData;
+  private emaData: EMAPeriod;
   private closePrice: number[];
-  private largest: number;
 
   constructor(closePrice: number[]) {
-    this.largest = Math.max(...PERIODS);
     this.closePrice = closePrice;
     this.emaData = {
       "9": -1,
       "15": -1,
       "100": -1,
     };
-    for (const period of PERIODS) {
+    for (const period of LENGTHS) {
       if (closePrice.length < period) {
         logger.error(
           `Insufficient data size for ${period}-period EMA. Data size: ${closePrice.length}`
@@ -34,16 +34,16 @@ class EMATracker {
         const prevEMA = new_ema;
         new_ema = (price - prevEMA) * multiplier + prevEMA;
       }
-      this.emaData[String(period) as keyof EMAData] = new_ema;
+      this.emaData[String(period) as keyof EMAPeriod] = new_ema;
     }
-    if (this.closePrice.length > this.largest) {
+    if (this.closePrice.length > largest) {
       this.closePrice = [];
     }
   }
 
   public addEMA(price: number) {
-    for (const period of PERIODS) {
-      const prevEMA = this.emaData[String(period) as keyof EMAData] || price;
+    for (const period of LENGTHS) {
+      const prevEMA = this.emaData[String(period) as keyof EMAPeriod] || price;
 
       // Insufficent data for EMA calculation
       if (prevEMA === -1) {
@@ -53,20 +53,21 @@ class EMATracker {
             `Insufficient data size for ${period}-period EMA. Data size: ${this.closePrice.length}`
           );
           this.closePrice.push(price);
-          break;
-        } else if (this.closePrice.length > this.largest) {
+        } else if (this.closePrice.length > largest) {
           this.closePrice = [];
         } else {
-          this.emaData[String(period) as keyof EMAData] =
-            this.closePrice.reduce((a, b) => a + b, 0) / period;
+          this.emaData[String(period) as keyof EMAPeriod] =
+            this.closePrice.slice(-period).reduce((a, b) => a + b, 0) / period;
         }
+        continue;
       }
       const multiplier = 2 / (period + 1);
       const new_ema = (price - prevEMA) * multiplier + prevEMA;
-      this.emaData[String(period) as keyof EMAData] = new_ema;
+      this.emaData[String(period) as keyof EMAPeriod] = new_ema;
     }
   }
-  public getEMA(period: keyof EMAData) {
+
+  public getEMA(period: keyof EMAPeriod) {
     return this.emaData[period];
   }
 }
