@@ -1,9 +1,10 @@
-import { broadcast } from "../index";
 import { marketDataManager } from "../index";
 import logger from "../utils/logger";
 import { Timeframe } from "./MarketDataManager";
 import VolumeSpikeTracker from "../algorithmicStrats/volumeSpikeTracker";
 import aboveEMA from "../algorithmicStrats/aboveEMA";
+import { signalManager } from "../index";
+import { cooldownService } from "./cooldownService";
 
 export type Algorithm = (data: string, timeframe: Timeframe) => boolean;
 
@@ -32,7 +33,7 @@ class AlgoManager {
   // runAlgoithms should store the symbol data and pass it to the algorithms. Current method might not be feasible for
   // timeframes smaller than 1m
   // Candle could get closed before processing all algorithms making the signal obsolete
-  public runAlgorithms(symbol: string, timeframe: Timeframe) {
+  public async runAlgorithms(symbol: string, timeframe: Timeframe) {
     if (!marketDataManager.hasData(symbol, timeframe)) {
       logger.error(
         `Error running algorithms for ${symbol} ${timeframe}: No data available`
@@ -40,6 +41,7 @@ class AlgoManager {
       return false;
     }
     const algos = this.algorithms.slice();
+
     for (const algo of algos) {
       if (!algo(symbol, timeframe)) {
         logger.debug(
@@ -48,9 +50,24 @@ class AlgoManager {
         return false;
       }
       logger.debug(
-        `Algorithm passed for ${symbol} ${timeframe}, reson: ${algo.name}`
+        `Algorithm passed for ${symbol} ${timeframe}, reason: ${algo.name}`
       );
     }
+
+    if (
+      !cooldownService.checkCooldown(
+        symbol,
+        marketDataManager.getCandleData(symbol, timeframe).closingTimestamp
+      )
+    ) {
+      return false;
+    }
+
+    await signalManager.addSignal(
+      symbol,
+      timeframe,
+      marketDataManager.getCandleData(symbol, timeframe)
+    );
     logger.info(`All algorithms passed for ${symbol} ${timeframe}`);
     return true;
   }

@@ -4,6 +4,8 @@ import { Mutex } from "async-mutex";
 import { marketDataManager } from "..";
 import { AddCandleData } from "../services/MarketDataManager";
 import { Timeframe } from "../services/MarketDataManager";
+import { signalManager } from "../index";
+
 const WS_URL = "wss://fstream.binance.com/ws";
 
 function getSymbolPath(
@@ -114,16 +116,21 @@ class FetchKlineStream {
           quoteVolume: Number(kline.q),
           isClosed: kline.x,
         };
+        const candleData: AddCandleData = {
+          openingTimestamp: klineInfo.openingTimestamp,
+          openPrice: klineInfo.open,
+          highPrice: klineInfo.high,
+          lowPrice: klineInfo.low,
+          closePrice: klineInfo.close,
+          volume: klineInfo.volume,
+          closingTimestamp: klineInfo.closingTimestamp,
+        };
+        signalManager.updateSignals(
+          klineInfo.symbol,
+          klineInfo.interval,
+          candleData
+        );
         if (klineInfo.isClosed) {
-          const candleData: AddCandleData = {
-            openingTimestamp: klineInfo.openingTimestamp,
-            openPrice: klineInfo.open,
-            highPrice: klineInfo.high,
-            lowPrice: klineInfo.low,
-            closePrice: klineInfo.close,
-            volume: klineInfo.volume,
-            closingTimestamp: klineInfo.closingTimestamp,
-          };
           try {
             marketDataManager.addCandleData(
               klineInfo.symbol,

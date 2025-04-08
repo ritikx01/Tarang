@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EvalType {
+  NORMAL
+  SMART
+}
+
+model Signal {
+  id        String    @id @default(uuid())
+  symbol    String
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float
+  timeframe String
+  openTime  DateTime
+  closeTime DateTime
+  createdAt DateTime  @default(now())
+  rules     Float[]
+  outcomes  Outcome[]
+
+  @@unique([symbol, timeframe, openTime])
+  @@index([symbol, openTime])
+}
+
+model Outcome {
+  id          String   @id @default(uuid())
+  signalId    String
+  condition   Int
+  result      Int
+  evalType    EvalType
+  targetPrice Float
+  stopPrice   Float
+  duration    Int
+  completedAt DateTime
+
+  signal Signal @relation(fields: [signalId], references: [id])
+
+  @@index([signalId, condition])
+}

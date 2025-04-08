@@ -47,8 +47,8 @@ export type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "D" | "W";
 // (Price should be higher than average)
 const timeframeCandleMapping: { [timeframe in Timeframe]?: number } = {
   // "1m": 100,
-  "5m": 288,
-  "15m": 72,
+  // "5m": 288,
+  "15m": 96,
 };
 
 // Historical candles to fetch
@@ -76,7 +76,6 @@ class MarketDataManager {
   public async initializeMarketDataManager() {
     try {
       const symbols = await fetchSymbolList();
-      // const symbols = ["linausdt"]
 
       const count = symbols.length;
       logger.info(
@@ -229,6 +228,25 @@ class MarketDataManager {
       clearTimeout(timeout);
     }
     this.timeoutStorage.clear();
+  }
+
+  public getCandleData(symbol: string, timeframe: Timeframe): AddCandleData {
+    if (!this.hasData(symbol, timeframe)) {
+      logger.warn(
+        `No existing data for ${symbol} ${timeframe}. Initialize candle data first.`
+      );
+      return {} as AddCandleData;
+    }
+    const marketDataEntry = this.marketData[symbol][timeframe];
+    return {
+      openingTimestamp: marketDataEntry.openingTimestamps.at(-1)!,
+      openPrice: marketDataEntry.openPrices.at(-1)!,
+      highPrice: marketDataEntry.highPrices.at(-1)!,
+      lowPrice: marketDataEntry.lowPrices.at(-1)!,
+      closePrice: marketDataEntry.closePrices.at(-1)!,
+      volume: marketDataEntry.volumes.at(-1)!,
+      closingTimestamp: marketDataEntry.closingTimestamps.at(-1)!,
+    };
   }
 }
 

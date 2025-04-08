@@ -3,19 +3,18 @@ import logger from "../utils/logger";
 
 const KLINE_URL = "https://fapi.binance.com/fapi/v1/klines";
 
-interface Kline {
+export interface Kline {
   openingTimestamp: number;
-  open: string;
-  high: string;
-  low: string;
-  close: string;
-  volume: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
   closeTime: number;
-  quoteAssetVolume: string;
+  quoteAssetVolume: number;
   numberOfTrades: number;
-  takerBuyBaseVolume: string;
-  takerBuyQuoteVolume: string;
-  ignore: string;
+  takerBuyBaseVolume: number;
+  takerBuyQuoteVolume: number;
 }
 
 interface KLineData {
@@ -24,7 +23,7 @@ interface KLineData {
   data: string[];
 }
 
-type KlineDataPoint = [
+export type KlineDataPoint = [
   number, // Open time
   string, // Open price
   string, // High price
@@ -36,7 +35,7 @@ type KlineDataPoint = [
   number, // Number of trades
   string, // Taker buy base asset volume
   string, // Taker buy quote asset volume
-  string, // Ignore
+  string // Ignore
 ];
 
 interface KlineDataExtracted {
@@ -54,7 +53,7 @@ interface KlineDataExtracted {
 async function fetchKlineData(symbol: string, interval = "5m", limit = 288) {
   try {
     logger.info(
-      `Fetching kline data for ${symbol}. Interval: ${interval} and Limit: ${limit}`,
+      `Fetching kline data for ${symbol}. Interval: ${interval} and Limit: ${limit}`
     );
     const response = await axios.get<KlineDataPoint[]>(KLINE_URL, {
       params: { symbol, interval, limit: limit + 1 },
@@ -83,11 +82,13 @@ async function fetchKlineData(symbol: string, interval = "5m", limit = 288) {
       data.closingTimestamps.push(klineData[6]);
     });
     logger.info(
-      `Fetched data successfully for ${symbol} symbols at timestamp ${time}. Data length: ${data.openingTimestamps.length}`,
+      `Fetched data successfully for ${symbol} symbols at timestamp ${time}. Data length: ${data.openingTimestamps.length}`
     );
     if (data.openingTimestamps.length !== limit + 1) {
       logger.error(
-        `Expected ${limit + 1} data points but received ${data.openingTimestamps.length} for ${symbol}`,
+        `Expected ${limit + 1} data points but received ${
+          data.openingTimestamps.length
+        } for ${symbol}`
       );
     }
     return data;

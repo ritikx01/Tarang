@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.2",
+    "@prisma/client": "^6.5.0",
     "async-mutex": "^0.5.0",
     "axios": "^1.8.1",
     "express": "^4.21.2",
@@ -25,6 +26,7 @@
     "@types/axios": "^0.9.36",
     "@types/node": "^22.10.1",
     "@types/ws": "^8.5.13",
+    "prisma": "^6.5.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
