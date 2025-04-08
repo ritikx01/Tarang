@@ -152,6 +152,9 @@ class FetchKlineStream {
       }
     });
 
+    // Add a retry logic if the disconnect is not the 24 hour disconnect
+    // Graceful disconnect might not pe periodic 24h
+    // Disconnnect might be due to binance server maintainance
     ws.on("close", () => {
       logger.warn(`WebSocket closed`);
       logger.debug(`For: ${wsURL}`);

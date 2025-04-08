@@ -51,32 +51,21 @@ const timeframeCandleMapping: { [timeframe in Timeframe]?: number } = {
   "15m": 96,
 };
 
-// Historical candles to fetch
-const LIMIT = 300;
-
 class MarketDataManager {
   // Make marketData private and add getter
   public marketData: MarketDataStore = {};
   private fetchklineStream: FetchKlineStream;
-  private timeoutStorage: Map<string, NodeJS.Timeout> = new Map();
   private algoManager: AlgoManager;
 
   constructor() {
     this.fetchklineStream = new FetchKlineStream();
     this.algoManager = new AlgoManager();
-    for (const [timeframe, limit] of Object.entries(timeframeCandleMapping)) {
-      if (limit > LIMIT) {
-        throw new Error(
-          `Timeframe ${timeframe} has a limit of ${limit} which is greater than the max limit of ${LIMIT}`
-        );
-      }
-    }
   }
 
   public async initializeMarketDataManager() {
     try {
-      const symbols = await fetchSymbolList();
-
+      let symbols = await fetchSymbolList();
+      const insufficientSymbols: string[] = [];
       const count = symbols.length;
       logger.info(
         `Successfully fetched symbol list containing ${count} symbols`
@@ -86,20 +75,27 @@ class MarketDataManager {
       for (const symbol of symbols) {
         counter++;
         logger.info(`Processing symbol ${symbol} (${counter}/${count})`);
+        if (this.marketData[symbol]) {
+          logger.info(`Skipping old symbol ${symbol}`);
+          continue;
+        }
         for (const [timeframe, limit] of Object.entries(
           timeframeCandleMapping
         )) {
           try {
-            if (limit > LIMIT) {
-              throw new Error(
-                `Timeframe ${timeframe} has a limit of ${limit} which is greater than the max limit of ${LIMIT}`
-              );
-            }
+            const fetchCandleCount = limit * 3;
             const klineData = await fetchKlineData(
               symbol,
               timeframe as Timeframe,
-              LIMIT
+              fetchCandleCount
             );
+            if (klineData.openingTimestamps.length === 0) {
+              logger.warn(
+                `No data returned for ${symbol} ${timeframe}. Skipping symbol.`
+              );
+              insufficientSymbols.push(symbol);
+              continue;
+            }
             logger.info(
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
@@ -128,6 +124,7 @@ class MarketDataManager {
           }
         }
       }
+      symbols = symbols.filter((val) => !insufficientSymbols.includes(val));
       this.fetchklineStream.initWebsocket(
         symbols,
         Object.keys(timeframeCandleMapping) as Timeframe[]
@@ -143,12 +140,8 @@ class MarketDataManager {
 
   public cleanMarketDataManager() {
     try {
-      this.marketData = {};
       this.initializeMarketDataManager();
-      this.clearAllTimeouts();
-      logger.info(
-        "Market Data Manager cleaned and re-initialized successfully"
-      );
+      logger.info("Market Data Manager re-initialized successfully");
     } catch (error) {
       logger.error("Failed to re-initialize market data manager", {
         message: error instanceof Error ? error.message : String(error),
@@ -208,26 +201,6 @@ class MarketDataManager {
       this.marketData[symbol][timeframe] &&
       this.marketData[symbol][timeframe].closingTimestamps.length > 0
     );
-  }
-  public setTimeoutEntry(key: string, timeout: NodeJS.Timeout) {
-    if (this.timeoutStorage.has(key)) {
-      clearTimeout(this.timeoutStorage.get(key)!);
-    }
-    this.timeoutStorage.set(key, timeout);
-  }
-
-  public clearTimeoutEntry(key: string) {
-    if (this.timeoutStorage.has(key)) {
-      clearTimeout(this.timeoutStorage.get(key)!);
-      this.timeoutStorage.delete(key);
-    }
-  }
-
-  private clearAllTimeouts() {
-    for (const timeout of this.timeoutStorage.values()) {
-      clearTimeout(timeout);
-    }
-    this.timeoutStorage.clear();
   }
 
   public getCandleData(symbol: string, timeframe: Timeframe): AddCandleData {

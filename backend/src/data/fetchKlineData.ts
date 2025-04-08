@@ -49,8 +49,21 @@ interface KlineDataExtracted {
 }
 
 // Interface for the array of Klines
+const emptyKlineData: KlineDataExtracted = {
+  openingTimestamps: [],
+  openPrices: [],
+  highPrices: [],
+  lowPrices: [],
+  closePrices: [],
+  volumes: [],
+  closingTimestamps: [],
+};
 
-async function fetchKlineData(symbol: string, interval = "5m", limit = 288) {
+async function fetchKlineData(
+  symbol: string,
+  interval = "5m",
+  limit = 288
+): Promise<KlineDataExtracted> {
   try {
     logger.info(
       `Fetching kline data for ${symbol}. Interval: ${interval} and Limit: ${limit}`
@@ -88,8 +101,9 @@ async function fetchKlineData(symbol: string, interval = "5m", limit = 288) {
       logger.error(
         `Expected ${limit + 1} data points but received ${
           data.openingTimestamps.length
-        } for ${symbol}`
+        } for ${symbol}, discarding...`
       );
+      return emptyKlineData;
     }
     return data;
   } catch (error) {
