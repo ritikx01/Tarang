@@ -5,6 +5,8 @@ import VolumeSpikeTracker from "../algorithmicStrats/volumeSpikeTracker";
 import aboveEMA from "../algorithmicStrats/aboveEMA";
 import { signalManager } from "../index";
 import { cooldownService } from "./cooldownService";
+import { broadcast } from "../index";
+import sendToDiscord, { DiscordSignal } from "./sendToDiscord";
 
 export type Algorithm = (data: string, timeframe: Timeframe) => boolean;
 
@@ -14,7 +16,7 @@ class AlgoManager {
   constructor() {
     const volumeSpikeTracker = new VolumeSpikeTracker();
     this.algorithms.push(
-      volumeSpikeTracker.VolumeSpikeAlgorithm.bind(volumeSpikeTracker)
+      volumeSpikeTracker.VolumeSpikeAlgorithm.bind(volumeSpikeTracker),
     );
     this.algorithms.push(aboveEMA);
   }
@@ -36,39 +38,40 @@ class AlgoManager {
   public async runAlgorithms(symbol: string, timeframe: Timeframe) {
     if (!marketDataManager.hasData(symbol, timeframe)) {
       logger.error(
-        `Error running algorithms for ${symbol} ${timeframe}: No data available`
+        `Error running algorithms for ${symbol} ${timeframe}: No data available`,
       );
       return false;
     }
     const algos = this.algorithms.slice();
-
+    const candleData = marketDataManager.getCandleData(symbol, timeframe);
     for (const algo of algos) {
       if (!algo(symbol, timeframe)) {
         logger.debug(
-          `Algorithm failed for ${symbol} ${timeframe}, reson: ${algo.name}`
+          `Algorithm failed for ${symbol} ${timeframe}, reson: ${algo.name}`,
         );
         return false;
       }
       logger.debug(
-        `Algorithm passed for ${symbol} ${timeframe}, reason: ${algo.name}`
+        `Algorithm passed for ${symbol} ${timeframe}, reason: ${algo.name}`,
       );
     }
 
-    if (
-      !cooldownService.checkCooldown(
-        symbol,
-        marketDataManager.getCandleData(symbol, timeframe).closingTimestamp
-      )
-    ) {
+    if (!cooldownService.checkCooldown(symbol, candleData.closingTimestamp)) {
       return false;
     }
-
+    const discordData: DiscordSignal = {
+      symbol,
+      price: candleData.closePrice,
+      inline: true,
+    };
+    sendToDiscord.queueSignal(discordData);
     await signalManager.addSignal(
       symbol,
       timeframe,
-      marketDataManager.getCandleData(symbol, timeframe)
+      marketDataManager.getCandleData(symbol, timeframe),
     );
     logger.info(`All algorithms passed for ${symbol} ${timeframe}`);
+
     return true;
   }
 }
