@@ -33,7 +33,7 @@ class MedianTracker {
     );
   }
 
-  public add(x: number): void {
+  public add(x: number): number {
     logger.debug(`Adding number: ${x}`);
     if (this.lower.isEmpty() || x < this.lower.front()!) {
       this.lower.enqueue(x);
@@ -44,6 +44,7 @@ class MedianTracker {
     logger.debug(
       `After adding ${x}. Lower size: ${this.lower.size()}, Upper size: ${this.upper.size()}`
     );
+    return this.getMedian();
   }
 
   public remove(x: number): boolean {
