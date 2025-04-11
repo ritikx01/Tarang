@@ -89,7 +89,7 @@ class MarketDataManager {
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
             const medianData = new MedianTracker(klineData.volumes, limit);
-            const emaData = new EMATracker(klineData.closePrices);
+            const emaData = new EMATracker(klineData.closePrices, limit);
             if (!this.marketData[symbol]) {
               this.marketData[symbol] = {};
             }
