@@ -1,13 +1,21 @@
 import logger from "../utils/logger";
 
-const LENGTHS = [9, 15, 100];
+const LENGTHS = [
+  9,
+  12, // MACD
+  15,
+  20,
+  21,
+  26, // MACD
+  50, // Golden Cross
+  55, // Fibonacci
+  100,
+  200, // Golden Cross
+  233, // Fibonacci
+];
 const largest = 3 * Math.max(...LENGTHS);
 
-interface EMAPeriod {
-  "9"?: number;
-  "15": number;
-  "100": number;
-}
+export type EMAPeriod = Record<(typeof LENGTHS)[number], number>;
 
 class EMATracker {
   private emaData: EMAPeriod;
@@ -15,11 +23,10 @@ class EMATracker {
 
   constructor(closePrice: number[]) {
     this.closePrice = closePrice;
-    this.emaData = {
-      "9": -1,
-      "15": -1,
-      "100": -1,
-    };
+    this.emaData = Object.fromEntries(
+      LENGTHS.map((period) => [period, -1])
+    ) as EMAPeriod;
+
     for (const period of LENGTHS) {
       if (closePrice.length < period) {
         logger.error(
@@ -34,7 +41,7 @@ class EMATracker {
         const prevEMA = new_ema;
         new_ema = (price - prevEMA) * multiplier + prevEMA;
       }
-      this.emaData[String(period) as keyof EMAPeriod] = new_ema;
+      this.emaData[period] = new_ema;
     }
     if (this.closePrice.length > largest) {
       this.closePrice = [];
@@ -43,7 +50,7 @@ class EMATracker {
 
   public addEMA(price: number) {
     for (const period of LENGTHS) {
-      const prevEMA = this.emaData[String(period) as keyof EMAPeriod] || price;
+      const prevEMA = this.emaData[period] || price;
 
       // Insufficent data for EMA calculation
       if (prevEMA === -1) {
@@ -56,18 +63,18 @@ class EMATracker {
         } else if (this.closePrice.length > largest) {
           this.closePrice = [];
         } else {
-          this.emaData[String(period) as keyof EMAPeriod] =
+          this.emaData[period] =
             this.closePrice.slice(-period).reduce((a, b) => a + b, 0) / period;
         }
         continue;
       }
       const multiplier = 2 / (period + 1);
       const new_ema = (price - prevEMA) * multiplier + prevEMA;
-      this.emaData[String(period) as keyof EMAPeriod] = new_ema;
+      this.emaData[period] = new_ema;
     }
   }
 
-  public getEMA(period: keyof EMAPeriod) {
+  public getEMA(period: keyof EMAPeriod): number {
     return this.emaData[period];
   }
 }
