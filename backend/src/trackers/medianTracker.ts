@@ -3,16 +3,27 @@ import {
   MaxPriorityQueue,
 } from "@datastructures-js/priority-queue";
 import logger from "../utils/logger";
+import { AddCandleData } from "../services/MarketDataManager";
 
 class MedianTracker {
   private lower: MaxPriorityQueue<number>;
   private upper: MinPriorityQueue<number>;
+  private lookback: number;
+  private medians: number[] = [];
 
-  constructor(numbers: number[]) {
+  constructor(numbers: number[], lookback: number) {
+    this.lookback = lookback;
     this.lower = new MaxPriorityQueue();
     this.upper = new MinPriorityQueue();
     logger.debug(`Initializing MedianTracker with numbers: ${numbers}`);
-    numbers.forEach((num) => this.add(num));
+    for (let i = 0; i < numbers.length; i++) {
+      this.add(numbers[i]);
+
+      if (i >= lookback - 1) {
+        this.medians.push(this.getMedian());
+        this.remove(numbers[i - lookback + 1]);
+      }
+    }
   }
 
   private balance(): void {
@@ -32,8 +43,15 @@ class MedianTracker {
       `Balanced queues. Lower size: ${this.lower.size()}, Upper size: ${this.upper.size()}`
     );
   }
-
-  public add(x: number): number {
+  public update(
+    newCandle: AddCandleData,
+    firstCandle: AddCandleData,
+    lastCandle: AddCandleData
+  ) {
+    this.remove(firstCandle.volume);
+    this.add(newCandle.volume);
+  }
+  private add(x: number): number {
     logger.debug(`Adding number: ${x}`);
     if (this.lower.isEmpty() || x < this.lower.front()!) {
       this.lower.enqueue(x);
@@ -47,7 +65,7 @@ class MedianTracker {
     return this.getMedian();
   }
 
-  public remove(x: number): boolean {
+  private remove(x: number): boolean {
     logger.debug(`Attempting to remove number: ${x}`);
     if (this.lower.isEmpty() && this.upper.isEmpty()) {
       logger.warn("Cannot remove number: Queues are empty.");

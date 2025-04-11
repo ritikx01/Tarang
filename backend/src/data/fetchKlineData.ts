@@ -38,7 +38,7 @@ export type KlineDataPoint = [
   string // Ignore
 ];
 
-interface KlineDataExtracted {
+export interface KlineDataExtracted {
   openingTimestamps: number[];
   openPrices: number[];
   highPrices: number[];

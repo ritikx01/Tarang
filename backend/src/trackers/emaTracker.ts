@@ -1,4 +1,5 @@
 import logger from "../utils/logger";
+import { AddCandleData } from "../services/MarketDataManager";
 
 const LENGTHS = [
   9,
@@ -47,8 +48,16 @@ class EMATracker {
       this.closePrice = [];
     }
   }
-
-  public addEMA(price: number) {
+  // This method exists only to maintain uniformity across all trackers
+  public update(
+    newCandle: AddCandleData,
+    firstCandle: AddCandleData,
+    lastCandle: AddCandleData
+  ) {
+    const price: number = newCandle.closePrice;
+    this.add(price);
+  }
+  private add(price: number) {
     for (const period of LENGTHS) {
       const prevEMA = this.emaData[period] || price;
 

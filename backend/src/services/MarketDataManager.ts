@@ -5,15 +5,9 @@ import fetchSymbolList from "../data/fetchSymbolList";
 import EMATracker from "../trackers/emaTracker";
 import FetchKlineStream from "../data/fetchKlineStream";
 import AlgoManager from "./algoManager";
+import { KlineDataExtracted } from "../data/fetchKlineData";
 
-interface CandleData {
-  openingTimestamps: number[];
-  openPrices: number[];
-  highPrices: number[];
-  lowPrices: number[];
-  closePrices: number[];
-  volumes: number[];
-  closingTimestamps: number[];
+interface CandleData extends KlineDataExtracted {
   emaData: EMATracker;
   medianData: MedianTracker;
 }
@@ -26,7 +20,10 @@ export interface AddCandleData {
   volume: number;
   closingTimestamp: number;
 }
-const propertyMappings: [keyof CandleData & string, keyof AddCandleData][] = [
+const propertyMappings: [
+  keyof KlineDataExtracted & string,
+  keyof AddCandleData
+][] = [
   ["openingTimestamps", "openingTimestamp"],
   ["openPrices", "openPrice"],
   ["highPrices", "highPrice"],
@@ -91,9 +88,7 @@ class MarketDataManager {
             logger.info(
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
-            const medianData = new MedianTracker(
-              klineData.volumes.slice(-limit)
-            );
+            const medianData = new MedianTracker(klineData.volumes, limit);
             const emaData = new EMATracker(klineData.closePrices);
             if (!this.marketData[symbol]) {
               this.marketData[symbol] = {};
@@ -103,6 +98,11 @@ class MarketDataManager {
               emaData,
               medianData,
             };
+            for (const [arrayKey] of propertyMappings) {
+              this.marketData[symbol][timeframe][arrayKey] = this.marketData[
+                symbol
+              ][timeframe][arrayKey].slice(-limit);
+            }
             // To-do: Add a way to delay ws stream initialization until historical data is processed
             // Market data initialized, now start the websocket stream
           } catch (error) {
@@ -156,21 +156,18 @@ class MarketDataManager {
     const marketDataEntry = this.marketData[symbol][timeframe];
 
     // Update median data
-    const limit = timeframeCandleMapping[timeframe]!;
-    if (marketDataEntry.volumes.length === limit) {
-      const removed = marketDataEntry.medianData.remove(
-        marketDataEntry.volumes.at(-limit)!!
-      );
-      if (!removed) {
-        logger.error(`Failed to remove volume data for ${symbol} ${timeframe}`);
-      }
+    const firstCandle = this.getCandleData(symbol, timeframe, 0);
+    const lastCandle = this.getCandleData(symbol, timeframe, -1);
+    if (!firstCandle.closePrice) {
+      logger.error(`Failed to remove volume data for ${symbol} ${timeframe}`);
+      return;
     }
     logger.debug(
       `Adding volume: ${
         candleData.volume
       } for symbol ${symbol}, prev: ${marketDataEntry.medianData.getMedian()}`
     );
-    marketDataEntry.medianData.add(candleData.volume);
+    marketDataEntry.medianData.update(candleData, firstCandle, lastCandle);
 
     // Update candle data
     propertyMappings.forEach(([candleArrayProp, addCandleProp]) => {
@@ -180,7 +177,7 @@ class MarketDataManager {
     });
 
     // Update EMA
-    marketDataEntry.emaData.addEMA(candleData.closePrice);
+    marketDataEntry.emaData.update(candleData, firstCandle, lastCandle);
 
     //Run algorithms
     this.algoManager.runAlgorithms(symbol, timeframe);
@@ -194,7 +191,11 @@ class MarketDataManager {
     );
   }
 
-  public getCandleData(symbol: string, timeframe: Timeframe): AddCandleData {
+  public getCandleData(
+    symbol: string,
+    timeframe: Timeframe,
+    index: number = -1
+  ): AddCandleData {
     if (!this.hasData(symbol, timeframe)) {
       logger.warn(
         `No existing data for ${symbol} ${timeframe}. Initialize candle data first.`
@@ -203,13 +204,13 @@ class MarketDataManager {
     }
     const marketDataEntry = this.marketData[symbol][timeframe];
     return {
-      openingTimestamp: marketDataEntry.openingTimestamps.at(-1)!,
-      openPrice: marketDataEntry.openPrices.at(-1)!,
-      highPrice: marketDataEntry.highPrices.at(-1)!,
-      lowPrice: marketDataEntry.lowPrices.at(-1)!,
-      closePrice: marketDataEntry.closePrices.at(-1)!,
-      volume: marketDataEntry.volumes.at(-1)!,
-      closingTimestamp: marketDataEntry.closingTimestamps.at(-1)!,
+      openingTimestamp: marketDataEntry.openingTimestamps.at(index)!,
+      openPrice: marketDataEntry.openPrices.at(index)!,
+      highPrice: marketDataEntry.highPrices.at(index)!,
+      lowPrice: marketDataEntry.lowPrices.at(index)!,
+      closePrice: marketDataEntry.closePrices.at(index)!,
+      volume: marketDataEntry.volumes.at(index)!,
+      closingTimestamp: marketDataEntry.closingTimestamps.at(index)!,
     };
   }
 }
