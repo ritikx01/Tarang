@@ -92,7 +92,7 @@ class EMATracker {
     }
   }
 
-  public getEMA(period: keyof EMAPeriod, index: number = -1): number {
+  public getValue(period: keyof EMAPeriod, index: number = -1): number {
     const history = this.emaHistory[period];
     if (history.length === 0) return -1;
     if (index === -1) return history[history.length - 1];

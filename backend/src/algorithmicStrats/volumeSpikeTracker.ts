@@ -35,22 +35,24 @@ class VolumeSpikeTracker {
         );
 
       if (!candleVolume || !candleTime) {
-        logger.debug(`Incomplete market data for ${symbol} ${timeframe}. Candle volume: ${candleVolume}, Candle time: ${candleTime}`);
+        logger.debug(
+          `Incomplete market data for ${symbol} ${timeframe}. Candle volume: ${candleVolume}, Candle time: ${candleTime}`
+        );
         return false;
       }
 
       const medianVolume =
-        marketDataManager.marketData[symbol][timeframe].medianData.getMedian();
+        marketDataManager.marketData[symbol][timeframe].medianData.getValue();
 
       if (medianVolume * this.spikeThreshold <= candleVolume) {
         if (!this.previousSpikes[symbol]) {
           this.previousSpikes[symbol] = {};
         }
-      
+
         if (!this.previousSpikes[symbol][timeframe]) {
           this.previousSpikes[symbol][timeframe] = [];
         }
-        const timeframeSpikes = this.previousSpikes[symbol][timeframe]
+        const timeframeSpikes = this.previousSpikes[symbol][timeframe];
 
         // Adjust only when timeframeSpikes is not empty
         if (timeframeSpikes.length > 0) {
@@ -58,7 +60,12 @@ class VolumeSpikeTracker {
           // Fallback to current time, so difference is 0 hence no adjustments
           const prevSpikeCandleTime = timeframeSpikes.at(-1) ?? candleTime;
           // Incase adjustment value goes below 0, set it to 0
-          const adjustSpikeCandleTime = Math.max(Math.floor((candleTime - prevSpikeCandleTime) / timeframeToMs[timeframe]) - 1, 0);
+          const adjustSpikeCandleTime = Math.max(
+            Math.floor(
+              (candleTime - prevSpikeCandleTime) / timeframeToMs[timeframe]
+            ) - 1,
+            0
+          );
           timeframeSpikes.splice(0, adjustSpikeCandleTime);
         }
 
@@ -70,18 +77,21 @@ class VolumeSpikeTracker {
           logger.debug(`Volume spike passed for ${symbol} ${timeframe}`);
           return true;
         }
-        logger.debug(`Volume spike failed for ${symbol} ${timeframe}. Spike count ${timeframeSpikes.length}`);
-      }
-      else {
-        logger.debug(`Volume spike failed for ${symbol} ${timeframe}. Candle volume: ${candleVolume}, Median volume: ${medianVolume}`);
+        logger.debug(
+          `Volume spike failed for ${symbol} ${timeframe}. Spike count ${timeframeSpikes.length}`
+        );
+      } else {
+        logger.debug(
+          `Volume spike failed for ${symbol} ${timeframe}. Candle volume: ${candleVolume}, Median volume: ${medianVolume}`
+        );
       }
     } else {
       logger.warn(`No data available for ${symbol} ${timeframe}`);
       return false;
     }
-    
+
     return false;
   }
 }
 
-export default VolumeSpikeTracker; 
+export default VolumeSpikeTracker;

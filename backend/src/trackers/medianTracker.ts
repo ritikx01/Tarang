@@ -20,7 +20,7 @@ class MedianTracker {
       this.add(numbers[i]);
 
       if (i >= lookback - 1) {
-        this.medians.push(this.getMedian());
+        this.medians.push(this.getValue());
         this.remove(numbers[i - lookback + 1]);
       }
     }
@@ -62,7 +62,8 @@ class MedianTracker {
     logger.debug(
       `After adding ${x}. Lower size: ${this.lower.size()}, Upper size: ${this.upper.size()}`
     );
-    return this.getMedian();
+    this.medians.push(this.getValue());
+    return this.getValue();
   }
 
   private remove(x: number): boolean {
@@ -103,17 +104,18 @@ class MedianTracker {
     return true;
   }
 
-  public getMedian(): number {
+  public getValue(index: number = -1): number {
+    const history = this.medians;
     if (this.lower.isEmpty() && this.upper.isEmpty()) {
       logger.warn("Cannot calculate median: Queues are empty.");
       return 0;
     }
-    const median =
-      this.lower.size() > this.upper.size()
-        ? this.lower.front()!
-        : (this.lower.front()! + this.upper.front()!) / 2;
-    logger.debug(`Calculated median: ${median}`);
-    return median;
+    if (index === -1) return history[history.length - 1];
+    if (index < 0 || index >= history.length) {
+      logger.warn(`Invalid Median Volume index ${index}.`);
+      return 0;
+    }
+    return history[index];
   }
 }
 

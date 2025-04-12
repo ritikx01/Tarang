@@ -7,7 +7,7 @@ function aboveEMA(symbol: string, timeframe: Timeframe) {
     const closingPrice =
       marketDataManager.marketData[symbol][timeframe].closePrices.at(-1);
     const ema =
-      marketDataManager.marketData[symbol][timeframe].emaData.getEMA(100);
+      marketDataManager.marketData[symbol][timeframe].emaData.getValue(100);
     if (!closingPrice || !ema) {
       logger.warn(`Incomplete market data for ${symbol} ${timeframe}`);
       return false;

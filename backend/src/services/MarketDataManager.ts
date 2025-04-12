@@ -165,7 +165,7 @@ class MarketDataManager {
     logger.debug(
       `Adding volume: ${
         candleData.volume
-      } for symbol ${symbol}, prev: ${marketDataEntry.medianData.getMedian()}`
+      } for symbol ${symbol}, prev: ${marketDataEntry.medianData.getValue()}`
     );
     marketDataEntry.medianData.update(candleData, firstCandle, lastCandle);
 
