@@ -1,5 +1,6 @@
 import logger from "../utils/logger";
 import { AddCandleData } from "../services/MarketDataManager";
+import { KlineDataExtracted } from "../data/fetchKlineData";
 
 const LENGTHS = [
   9,
@@ -23,25 +24,26 @@ class EMATracker {
   private emaHistory: Record<number, number[]>;
   private closePrice: number[];
 
-  constructor(closePrice: number[], lookback: number) {
+  constructor(klineData: KlineDataExtracted, lookback: number) {
+    this.closePrice = klineData.closePrices;
     this.lookback = lookback;
-    this.closePrice = closePrice;
+    this.closePrice = this.closePrice;
     this.emaHistory = Object.fromEntries(LENGTHS.map((p) => [p, []])) as Record<
       number,
       number[]
     >;
 
     for (const period of LENGTHS) {
-      if (closePrice.length < period) {
+      if (this.closePrice.length < period) {
         logger.error(
-          `Insufficient data size for ${period}-period EMA. Data size: ${closePrice.length}`
+          `Insufficient data size for ${period}-period EMA. Data size: ${this.closePrice.length}`
         );
         break;
       }
       let new_ema =
-        closePrice.slice(0, period).reduce((a, b) => a + b, 0) / period;
+        this.closePrice.slice(0, period).reduce((a, b) => a + b, 0) / period;
       const multiplier = 2 / (period + 1);
-      for (const price of closePrice.slice(period)) {
+      for (const price of this.closePrice.slice(period)) {
         const prevEMA = new_ema;
         new_ema = (price - prevEMA) * multiplier + prevEMA;
       }

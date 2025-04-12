@@ -4,6 +4,7 @@ import {
 } from "@datastructures-js/priority-queue";
 import logger from "../utils/logger";
 import { AddCandleData } from "../services/MarketDataManager";
+import { KlineDataExtracted } from "../data/fetchKlineData";
 
 class MedianTracker {
   private lower: MaxPriorityQueue<number>;
@@ -11,7 +12,8 @@ class MedianTracker {
   private lookback: number;
   private medians: number[] = [];
 
-  constructor(numbers: number[], lookback: number) {
+  constructor(klineData: KlineDataExtracted, lookback: number) {
+    const numbers = klineData.volumes;
     this.lookback = lookback;
     this.lower = new MaxPriorityQueue();
     this.upper = new MinPriorityQueue();
