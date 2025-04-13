@@ -1,5 +1,5 @@
 import logger from "../utils/logger";
-import { AddCandleData } from "../services/MarketDataManager";
+import { AddCandleData, Timeframe } from "../services/MarketDataManager";
 import { KlineDataExtracted } from "../data/fetchKlineData";
 
 const LENGTHS = [
@@ -23,8 +23,18 @@ class EMATracker {
   private lookback: number;
   private emaHistory: Record<number, number[]>;
   private closePrice: number[];
+  private symbol: string;
+  private timeframe: Timeframe;
 
-  constructor(klineData: KlineDataExtracted, lookback: number) {
+  constructor(
+    symbol: string,
+    timeframe: Timeframe,
+    klineData: KlineDataExtracted,
+    lookback: number
+  ) {
+    this.symbol = symbol;
+    this.timeframe = timeframe;
+    this.symbol = symbol;
     this.closePrice = klineData.closePrices;
     this.lookback = lookback;
     this.closePrice = this.closePrice;

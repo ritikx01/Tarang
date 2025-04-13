@@ -53,17 +53,19 @@ export type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "D" | "W";
 // (Price should be higher than average)
 const timeframeCandleMapping: { [timeframe in Timeframe]?: number } = {
   // "1m": 100,
-  // "5m": 288,
-  "15m": 96,
+  "5m": 144,
+  // "15m": 96,
 };
 
 function createIndicatorInstances(
+  symbol: string,
+  timeframe: Timeframe,
   klineData: KlineDataExtracted,
   limit: number
 ): Record<string, IndicatorTracker> {
   const indicators: Record<string, IndicatorTracker> = {};
   for (const { key, Class } of indicatorRegistry) {
-    indicators[key] = new Class(klineData, limit);
+    indicators[key] = new Class(symbol, timeframe, klineData, limit);
   }
   return indicators;
 }
@@ -114,7 +116,12 @@ class MarketDataManager {
             }
             this.marketData[symbol][timeframe] = {
               ...klineData,
-              indicators: createIndicatorInstances(klineData, limit),
+              indicators: createIndicatorInstances(
+                symbol,
+                timeframe as Timeframe,
+                klineData,
+                limit
+              ),
             };
             for (const [arrayKey] of propertyMappings) {
               this.marketData[symbol][timeframe][arrayKey] = this.marketData[
