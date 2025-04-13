@@ -106,7 +106,8 @@ class MedianTracker {
     return true;
   }
 
-  public getValue(index: number = -1): number {
+  public getValue(params?: { index: number }): number {
+    const index = params?.index ?? -1;
     const history = this.medians;
     if (this.lower.isEmpty() && this.upper.isEmpty()) {
       logger.warn("Cannot calculate median: Queues are empty.");
@@ -118,6 +119,9 @@ class MedianTracker {
       return 0;
     }
     return history[index];
+  }
+  public getAll(): number[] {
+    return this.medians;
   }
 }
 

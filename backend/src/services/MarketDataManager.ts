@@ -6,10 +6,19 @@ import EMATracker from "../trackers/emaTracker";
 import FetchKlineStream from "../data/fetchKlineStream";
 import AlgoManager from "./algoManager";
 import { KlineDataExtracted } from "../data/fetchKlineData";
+import {
+  indicatorRegistry,
+  IndicatorTracker,
+} from "../indicators/indicatorRegistry";
+
+type IndicatorMap = {
+  [Entry in (typeof indicatorRegistry)[number] as Entry["key"]]: InstanceType<
+    Entry["Class"]
+  >;
+};
 
 interface CandleData extends KlineDataExtracted {
-  emaData: EMATracker;
-  medianData: MedianTracker;
+  indicators: IndicatorMap;
 }
 export interface AddCandleData {
   openingTimestamp: number;
@@ -47,6 +56,17 @@ const timeframeCandleMapping: { [timeframe in Timeframe]?: number } = {
   // "5m": 288,
   "15m": 96,
 };
+
+function createIndicatorInstances(
+  klineData: KlineDataExtracted,
+  limit: number
+): Record<string, IndicatorTracker> {
+  const indicators: Record<string, IndicatorTracker> = {};
+  for (const { key, Class } of indicatorRegistry) {
+    indicators[key] = new Class(klineData, limit);
+  }
+  return indicators;
+}
 
 class MarketDataManager {
   // Make marketData private and add getter
@@ -88,15 +108,13 @@ class MarketDataManager {
             logger.info(
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
-            const medianData = new MedianTracker(klineData, limit);
-            const emaData = new EMATracker(klineData, limit);
+
             if (!this.marketData[symbol]) {
               this.marketData[symbol] = {};
             }
             this.marketData[symbol][timeframe] = {
               ...klineData,
-              emaData,
-              medianData,
+              indicators: createIndicatorInstances(klineData, limit),
             };
             for (const [arrayKey] of propertyMappings) {
               this.marketData[symbol][timeframe][arrayKey] = this.marketData[
@@ -165,9 +183,8 @@ class MarketDataManager {
     logger.debug(
       `Adding volume: ${
         candleData.volume
-      } for symbol ${symbol}, prev: ${marketDataEntry.medianData.getValue()}`
+      } for symbol ${symbol}, prev: ${marketDataEntry.indicators.medianData.getValue()}`
     );
-    marketDataEntry.medianData.update(candleData, firstCandle, lastCandle);
 
     // Update candle data
     propertyMappings.forEach(([candleArrayProp, addCandleProp]) => {
@@ -175,9 +192,11 @@ class MarketDataManager {
       array.shift();
       array.push(candleData[addCandleProp]);
     });
-
-    // Update EMA
-    marketDataEntry.emaData.update(candleData, firstCandle, lastCandle);
+    // Implement error handling
+    for (const [key, value] of Object.entries(marketDataEntry.indicators)) {
+      logger.debug(`Updating indicator ${key}`);
+      value.update(candleData, firstCandle, lastCandle);
+    }
 
     //Run algorithms
     this.algoManager.runAlgorithms(symbol, timeframe);

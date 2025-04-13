@@ -42,7 +42,9 @@ class VolumeSpikeTracker {
       }
 
       const medianVolume =
-        marketDataManager.marketData[symbol][timeframe].medianData.getValue();
+        marketDataManager.marketData[symbol][
+          timeframe
+        ].indicators.medianData.getValue();
 
       if (medianVolume * this.spikeThreshold <= candleVolume) {
         if (!this.previousSpikes[symbol]) {
