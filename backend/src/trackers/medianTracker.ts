@@ -77,19 +77,27 @@ class MedianTracker {
 
     let removed = false;
     if (this.lower.toArray().includes(x)) {
+      const arr = this.lower.toArray();
+      const idx = arr.indexOf(x);
+      if (idx === -1) return false;
+
+      arr.splice(idx, 1);
       const newLower = new MaxPriorityQueue<number>();
-      this.lower
-        .toArray()
-        .filter((num: number) => num !== x)
-        .forEach((num) => newLower.enqueue(num));
+      for (const n of arr) {
+        newLower.enqueue(n);
+      }
       this.lower = newLower;
       removed = true;
     } else if (this.upper.toArray().includes(x)) {
+      const arr = this.upper.toArray();
+      const idx = arr.indexOf(x);
+      if (idx === -1) return false;
+
+      arr.splice(idx, 1); // remove first occurrence
       const newUpper = new MinPriorityQueue<number>();
-      this.upper
-        .toArray()
-        .filter((num: number) => num !== x)
-        .forEach((num) => newUpper.enqueue(num));
+      for (const n of arr) {
+        newUpper.enqueue(n);
+      }
       this.upper = newUpper;
       removed = true;
     }
