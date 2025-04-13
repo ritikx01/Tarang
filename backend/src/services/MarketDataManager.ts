@@ -83,13 +83,13 @@ class MarketDataManager {
 
   public async initializeMarketDataManager() {
     try {
-      const symbols = await fetchSymbolList();
+      let symbols = await fetchSymbolList();
       const count = symbols.length;
       logger.info(
         `Successfully fetched symbol list containing ${count} symbols`
       );
       let counter = 0;
-
+      const toFilter: string[] = [];
       for (const symbol of symbols) {
         counter++;
         logger.info(`Processing symbol ${symbol} (${counter}/${count})`);
@@ -110,7 +110,10 @@ class MarketDataManager {
             logger.info(
               `Successfully fetched ${symbol} ${timeframe} data: ${klineData.closingTimestamps.length} candles`
             );
-
+            if (klineData.closingTimestamps.length < fetchCandleCount) {
+              toFilter.push(symbol);
+              continue;
+            }
             if (!this.marketData[symbol]) {
               this.marketData[symbol] = {};
             }
@@ -141,6 +144,8 @@ class MarketDataManager {
           }
         }
       }
+      logger.info(`Filering out ${toFilter.length} symbols: ${toFilter}`);
+      symbols = symbols.filter((symbol) => !toFilter.includes(symbol));
       this.fetchklineStream.initWebsocket(
         symbols,
         Object.keys(timeframeCandleMapping) as Timeframe[]
@@ -187,11 +192,7 @@ class MarketDataManager {
       logger.error(`Failed to remove volume data for ${symbol} ${timeframe}`);
       return;
     }
-    logger.debug(
-      `Adding volume: ${
-        candleData.volume
-      } for symbol ${symbol}, prev: ${marketDataEntry.indicators.medianData.getValue()}`
-    );
+    logger.debug(`Adding volume: ${candleData.volume} for symbol ${symbol}`);
 
     // Update candle data
     propertyMappings.forEach(([candleArrayProp, addCandleProp]) => {
