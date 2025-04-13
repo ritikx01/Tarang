@@ -28,12 +28,13 @@ class MedianTracker {
     this.upper = new MinPriorityQueue();
     logger.debug(`Initializing MedianTracker with numbers: ${numbers}`);
     for (let i = 0; i < numbers.length; i++) {
-      this.add(numbers[i]);
-
-      if (i >= lookback - 1) {
+      if (i >= lookback) {
+        this.remove(numbers[i - lookback]);
+        this.add(numbers[i]);
         this.medians.push(this.getValue());
-        this.remove(numbers[i - lookback + 1]);
+        continue;
       }
+      this.add(numbers[i]);
     }
   }
 
@@ -102,7 +103,7 @@ class MedianTracker {
       const idx = arr.indexOf(x);
       if (idx === -1) return false;
 
-      arr.splice(idx, 1); // remove first occurrence
+      arr.splice(idx, 1);
       const newUpper = new MinPriorityQueue<number>();
       for (const n of arr) {
         newUpper.enqueue(n);
@@ -112,7 +113,9 @@ class MedianTracker {
     }
 
     if (!removed) {
-      logger.warn(`Number ${x} not found in either queue.`);
+      logger.warn(
+        `Number ${x} not found in either queue for ${this.symbol}${this.timeframe}.`
+      );
       return false;
     }
 
@@ -125,17 +128,26 @@ class MedianTracker {
 
   public getValue(params?: { index: number }): number {
     const index = params?.index ?? -1;
-    const history = this.medians;
+
+    if (index !== -1) {
+      if (index < 0 || index >= this.medians.length) {
+        logger.warn(`Invalid Median Volume index ${index}.`);
+        return 0;
+      }
+      return this.medians[index];
+    }
+
     if (this.lower.isEmpty() && this.upper.isEmpty()) {
       logger.warn("Cannot calculate median: Queues are empty.");
       return 0;
     }
-    if (index === -1) return history[history.length - 1];
-    if (index < 0 || index >= history.length) {
-      logger.warn(`Invalid Median Volume index ${index}.`);
-      return 0;
+    const lowerFront = this.lower.front()!;
+    const upperFront = this.upper.front()!;
+    if (this.lower.size() === this.upper.size()) {
+      return (lowerFront + upperFront) / 2;
     }
-    return history[index];
+
+    return this.lower.size() > this.upper.size() ? lowerFront : upperFront;
   }
   public getAll(): number[] {
     return this.medians;

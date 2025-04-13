@@ -105,6 +105,9 @@ async function fetchKlineData(
       );
       return emptyKlineData;
     }
+    for (const key of Object.keys(data) as (keyof typeof data)[]) {
+      data[key].pop();
+    }
     return data;
   } catch (error) {
     logger.error("Error fetching Kline data:\n", error);
