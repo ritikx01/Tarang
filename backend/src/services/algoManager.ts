@@ -5,8 +5,9 @@ import VolumeSpikeTracker from "../algorithmicStrats/volumeSpikeTracker";
 import aboveEMA from "../algorithmicStrats/aboveEMA";
 import { signalManager } from "../index";
 import { cooldownService } from "./cooldownService";
-import { broadcast } from "../index";
 import sendToDiscord, { DiscordSignal } from "./sendToDiscord";
+import multiplier from "../algorithmicStrats/multiplier";
+import atrPriceRatio from "../algorithmicStrats/atrPriceRatio";
 
 export type Algorithm = (data: string, timeframe: Timeframe) => boolean;
 
@@ -16,9 +17,11 @@ class AlgoManager {
   constructor() {
     const volumeSpikeTracker = new VolumeSpikeTracker();
     this.algorithms.push(
-      volumeSpikeTracker.VolumeSpikeAlgorithm.bind(volumeSpikeTracker),
+      volumeSpikeTracker.VolumeSpikeAlgorithm.bind(volumeSpikeTracker)
     );
     this.algorithms.push(aboveEMA);
+    this.algorithms.push(multiplier);
+    this.algorithms.push(atrPriceRatio);
   }
 
   public registerAlgorithm(algo: Algorithm) {
@@ -38,7 +41,7 @@ class AlgoManager {
   public async runAlgorithms(symbol: string, timeframe: Timeframe) {
     if (!marketDataManager.hasData(symbol, timeframe)) {
       logger.error(
-        `Error running algorithms for ${symbol} ${timeframe}: No data available`,
+        `Error running algorithms for ${symbol} ${timeframe}: No data available`
       );
       return false;
     }
@@ -47,12 +50,12 @@ class AlgoManager {
     for (const algo of algos) {
       if (!algo(symbol, timeframe)) {
         logger.debug(
-          `Algorithm failed for ${symbol} ${timeframe}, reson: ${algo.name}`,
+          `Algorithm failed for ${symbol} ${timeframe}, reson: ${algo.name}`
         );
         return false;
       }
       logger.debug(
-        `Algorithm passed for ${symbol} ${timeframe}, reason: ${algo.name}`,
+        `Algorithm passed for ${symbol} ${timeframe}, reason: ${algo.name}`
       );
     }
 
@@ -68,7 +71,7 @@ class AlgoManager {
     await signalManager.addSignal(
       symbol,
       timeframe,
-      marketDataManager.getCandleData(symbol, timeframe),
+      marketDataManager.getCandleData(symbol, timeframe)
     );
     logger.info(`All algorithms passed for ${symbol} ${timeframe}`);
 
