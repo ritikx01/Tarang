@@ -140,8 +140,10 @@ export default class SignalManager {
       if (!signal.rulesEvaluationResult.has(ruleId)) continue;
 
       const [win, loss] = signalEvaluationRules[ruleId];
-      const winThreshold = buyPrice * (1 + win / 100);
-      const lossThreshold = buyPrice * (1 - loss / 100);
+      const winThreshold =
+        Math.round(buyPrice * (1 + win / 100) * 10 ** 8) / 10 ** 8;
+      const lossThreshold =
+        Math.round(buyPrice * (1 - loss / 100) * 10 ** 8) / 10 ** 8;
       let evaluation: SignalResultType = 0;
 
       if (candleData.closePrice >= winThreshold) {

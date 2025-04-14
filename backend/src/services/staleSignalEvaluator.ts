@@ -170,6 +170,15 @@ async function checkCondition(
   startTime: number
 ): Promise<Result> {
   const symbol = staleSignal.symbol;
+  function resetToDayStart(epoch: number): number {
+    const date = new Date(epoch);
+    date.setUTCHours(0, 0, 0, 0);
+    return date.getTime();
+  }
+  const dayStart = resetToDayStart(startTime);
+  console.log(
+    `Checking foe ${symbol}, base: ${basePrice}, up: ${upPercentage}, down: ${downPercentage}, starttime: ${startTime}`
+  );
 
   // Rounding becuase floating point precision issues
   const decimals = 8;
@@ -177,7 +186,7 @@ async function checkCondition(
     Math.round(basePrice * (1 + upPercentage / 100) * 10 ** decimals) /
     10 ** decimals;
   const downTarget =
-    Math.round(basePrice * (1 + downPercentage / 100) * 10 ** decimals) /
+    Math.round(basePrice * (1 - downPercentage / 100) * 10 ** decimals) /
     10 ** decimals;
   // Check cache
   const upTime = conditionCache[upTarget];
@@ -185,7 +194,7 @@ async function checkCondition(
 
   // Calculate required data
   let interval: BinanceIntervals = "1d"; // To-do: Increase the default to 1M
-  let klines = await fetchKlines(symbol, startTime, interval);
+  let klines = await fetchKlines(symbol, dayStart, interval);
 
   const result: Result = {
     lastFoundTime: null,
@@ -201,12 +210,21 @@ async function checkCondition(
     downTime !== undefined ? downTime : Infinity
   );
   if (outcomeTime === upTime) {
+    logger.debug(`Cache hit for ${upPercentage}`);
     return { lastFoundTime: upTime, outcome: 1 };
   } else if (outcomeTime === downTime) {
+    logger.debug(`Cache hit for ${downPercentage}`);
     return { lastFoundTime: downTime, outcome: -1 };
   }
+  let isFirstFetch = true;
   // Check until lowest timeframe
-  while (attemptCount++ < MAX_ATTEMPTS) {
+  outer: while (attemptCount++ < MAX_ATTEMPTS) {
+    if (isFirstFetch) {
+      klines = await fetchKlines(symbol, dayStart, interval);
+      isFirstFetch = false;
+    } else {
+      klines = await fetchKlines(symbol, startTime, interval);
+    }
     for (const k of klines) {
       const high = Number(k.high);
       const low = Number(k.low);
@@ -224,16 +242,18 @@ async function checkCondition(
         switch (interval) {
           case "1d":
             interval = "1m";
-            break;
+            startTime = Math.max(startTime, k.openingTimestamp);
+            continue outer;
           case "1m":
-            let tradeStartTime = startTime;
+            let tradeStartTime = k.openingTimestamp;
             let tradeAttempts = 0;
             const MAX_TRADE_ATTEMPTS = 5;
 
             while (tradeAttempts++ < MAX_TRADE_ATTEMPTS) {
               const aggTrades = await fetchAggTrades(symbol, tradeStartTime);
-              if (aggTrades.length === 0) break;
-
+              if (aggTrades.length === 0) {
+                break;
+              }
               for (const trade of aggTrades) {
                 const price = Number(trade.p);
                 const time = trade.T;
@@ -258,8 +278,6 @@ async function checkCondition(
             // return the candle open time where breach was detected
             return result;
         }
-        klines = await fetchKlines(symbol, startTime, interval);
-        break;
       }
     }
     // No breach was found in current klines
@@ -285,7 +303,24 @@ async function checkCondition(
   // Max attempts reached
   return result || { lastFoundTime: null, outcome: 0 };
 }
+function msToTime(ms: number): {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+} {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
 
+  return {
+    days,
+    hours: hours % 24,
+    minutes: minutes % 60,
+    seconds: seconds % 60,
+  };
+}
 async function staleSignalEvaluator(): Promise<void> {
   let staleSignals: StaleSignal[] = [];
   try {
@@ -313,13 +348,15 @@ async function staleSignalEvaluator(): Promise<void> {
         const outcome: OutcomeType = {
           id: "",
           signalId: staleSignal.id,
-          condition: ruleId,
+          condition: ruleId + 1,
           result: evaluationResult.outcome,
           targetPrice:
             Math.round(staleSignal.open * (1 + up / 100) * 10 ** 8) / 10 ** 8,
           stopPrice:
             Math.round(staleSignal.open * (1 + down / 100) * 10 ** 8) / 10 ** 8,
-          duration: 0,
+          duration: Math.round(
+            evaluationResult.lastFoundTime! - staleSignal.openTime.getTime()
+          ),
           completedAt: new Date(),
         };
         try {

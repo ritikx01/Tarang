@@ -45,7 +45,7 @@ model Outcome {
   evalType    EvalType
   targetPrice Float
   stopPrice   Float
-  duration    Int
+  duration    BigInt
   completedAt DateTime
 
   signal Signal @relation(fields: [signalId], references: [id])
