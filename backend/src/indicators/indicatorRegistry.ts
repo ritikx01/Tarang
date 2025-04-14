@@ -3,6 +3,7 @@ import MedianTracker from "../trackers/medianTracker";
 import { AddCandleData } from "../services/MarketDataManager";
 import { KlineDataExtracted } from "../data/fetchKlineData";
 import { Timeframe } from "../services/MarketDataManager";
+import ATRTracker, { ATRPeriod } from "../trackers/atrTracker";
 
 export interface IndicatorTracker {
   update(
@@ -10,7 +11,10 @@ export interface IndicatorTracker {
     firstCandle: AddCandleData,
     lastCandle: AddCandleData
   ): void;
-  getValue(params?: { index?: number; period?: keyof EMAPeriod }): number;
+  getValue(params?: {
+    index?: number;
+    period?: keyof EMAPeriod | keyof ATRPeriod;
+  }): number;
   getAll(): Record<number, number[]> | number[];
 }
 interface IndicatorMeta {
@@ -26,4 +30,5 @@ interface IndicatorMeta {
 export const indicatorRegistry: IndicatorMeta[] = [
   { key: "emaData", Class: EMATracker },
   { key: "medianData", Class: MedianTracker },
+  { key: "atr", Class: ATRTracker },
 ] as const;
