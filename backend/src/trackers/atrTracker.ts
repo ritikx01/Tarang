@@ -12,13 +12,14 @@ const dummy: AddCandleData = {
   volume: 0,
   closingTimestamp: 0,
 };
+
 export class ATRTracker {
   private symbol: string;
   private timeframe: Timeframe;
   private lookback: number;
-  private atrBuffers: Map<number, number[]> = new Map();
-  private atrValues: Map<number, number | null> = new Map();
-  private trQueues: Map<number, number[]> = new Map();
+  private atrBuffers: Record<number, number[]> = {};
+  private atrValues: Record<number, number | null> = {};
+  private trQueues: Record<number, number[]> = {};
   private prevClose: number | null = null;
 
   constructor(
@@ -32,9 +33,9 @@ export class ATRTracker {
     this.lookback = lookback;
 
     for (const l of LENGTHS) {
-      this.atrBuffers.set(l, []);
-      this.trQueues.set(l, []);
-      this.atrValues.set(l, null);
+      this.atrBuffers[l] = [];
+      this.trQueues[l] = [];
+      this.atrValues[l] = null;
     }
 
     for (let i = 0; i < klineData.closePrices.length; i++) {
@@ -77,30 +78,29 @@ export class ATRTracker {
     );
 
     for (const length of LENGTHS) {
-      const trQueue = this.trQueues.get(length)!;
-      let atr = this.atrValues.get(length);
+      const trQueue = this.trQueues[length];
+      let atr = this.atrValues[length];
 
       if (atr === null) {
         trQueue.push(tr);
         if (trQueue.length === length) {
           atr = trQueue.reduce((sum, val) => sum + val, 0) / length;
-          this.atrValues.set(length, atr);
+          this.atrValues[length] = atr;
         }
       } else {
         // Wilder's smoothing
-        atr = (atr! * (length - 1) + tr) / length;
-        this.atrValues.set(length, atr);
+        atr = (atr * (length - 1) + tr) / length;
+        this.atrValues[length] = atr;
       }
 
       if (atr !== null) {
-        const atrBuffer = this.atrBuffers.get(length)!;
+        const atrBuffer = this.atrBuffers[length];
         atrBuffer.push(atr);
         if (atrBuffer.length > this.lookback) {
           atrBuffer.shift();
         }
       }
     }
-
     this.prevClose = close;
   }
 
@@ -108,7 +108,7 @@ export class ATRTracker {
     const period = params?.period ?? 14;
     const index = params?.index ?? -1;
 
-    const buffer = this.atrBuffers.get(period);
+    const buffer = this.atrBuffers[period];
 
     if (!buffer || buffer.length === 0) return -1;
     if (index === -1) return buffer[buffer.length - 1];
@@ -118,7 +118,7 @@ export class ATRTracker {
   }
 
   public getAll(period: keyof ATRPeriod = 14): number[] {
-    return this.atrBuffers.get(period) || [];
+    return this.atrBuffers[period] || [];
   }
 }
 
