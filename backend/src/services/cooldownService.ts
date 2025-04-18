@@ -22,6 +22,9 @@ class CooldownService {
     this.cooldownStore.set(symbol, closingTimestamp);
     return isAllowed;
   }
+  public getCooldown() {
+    return this.cooldownStore;
+  }
 }
 
 export const cooldownService = new CooldownService();
