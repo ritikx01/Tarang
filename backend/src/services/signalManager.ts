@@ -217,4 +217,10 @@ export default class SignalManager {
       this.isWriting = false;
     }
   }
+  public getActiveSignals() {
+    return this.activeSignalsStore;
+  }
+  public getrulesToEvaluate() {
+    return rulesToEvaluate;
+  }
 }
