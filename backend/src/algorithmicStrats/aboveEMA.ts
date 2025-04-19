@@ -6,9 +6,13 @@ function aboveEMA(symbol: string, timeframe: Timeframe) {
   if (marketDataManager.hasData(symbol, timeframe)) {
     const marketDataEntry = marketDataManager.marketData[symbol][timeframe];
     const closingPrice = marketDataEntry.closePrices.at(-1);
-    const ema100 = marketDataEntry.indicators.emaData.getValue({ period: 100 });
-    const ema21 = marketDataEntry.indicators.emaData.getValue({ period: 21 });
-    const ema10 = marketDataEntry.indicators.emaData.getValue({ period: 10 });
+    const ema100 = marketDataEntry.indicators["emaData"].getValue({
+      period: 100,
+    });
+    const ema21 = marketDataEntry.indicators["emaData"].getValue({
+      period: 21,
+    });
+    const ema10 = marketDataEntry.indicators["emaData"].getValue({ period: 9 });
 
     // Golden cross
     if (!closingPrice || !ema100 || !ema21 || !ema10) {

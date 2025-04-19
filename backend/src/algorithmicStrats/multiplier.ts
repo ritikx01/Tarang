@@ -17,7 +17,9 @@ function multiplier(symbol: string, timeframe: Timeframe, length = 20) {
   }
   const average = total / length;
 
-  const ema100 = marketDataEntry.indicators.ema.getValue({ period: 100 });
+  const ema100 = marketDataEntry.indicators["emaData"].getValue({
+    period: 100,
+  });
   const candleClose = closePrices.at(-1)!;
   const distanceFromEMA = candleClose - ema100;
 
