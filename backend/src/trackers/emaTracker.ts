@@ -105,10 +105,13 @@ class EMATracker {
   }
 
   public getValue(params: { index?: number; period: keyof EMAPeriod }): number {
-    const period = params?.period;
+    const period = params.period;
     const index = params?.index;
     const history = this.emaHistory[period];
-    if (history.length === 0) return -1;
+    if (!history || history.length === 0) {
+      logger.error(`Invalid period: ${period} value for symbol ${this.symbol}`);
+      return -1;
+    }
     if (index === -1 || index === undefined) return history[history.length - 1];
     if (index < 0 || index >= history.length) {
       logger.warn(`Invalid EMA index ${index} for period ${period}`);
