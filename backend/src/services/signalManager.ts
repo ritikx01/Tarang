@@ -223,4 +223,31 @@ export default class SignalManager {
   public getrulesToEvaluate() {
     return rulesToEvaluate;
   }
+
+  public async removeSignal(symbol: string): Promise<boolean> {
+    try {
+      if (!this.activeSignalsStore[symbol]) {
+        logger.error(`Signal for ${symbol} not active`);
+        return false;
+      }
+      const id = this.activeSignalsStore[symbol].signalId;
+      delete this.activeSignalsStore[symbol];
+      await prisma.signal.delete({
+        where: { id },
+      });
+      logger.info(`Successfully removed Signal from DB for ${symbol} (${id})`);
+      await prisma.outcome.deleteMany({
+        where: { signalId: id },
+      });
+      logger.info(
+        `Successfully removed all outcomes from DB for ${symbol} (${id})`
+      );
+      return true;
+    } catch (error) {
+      logger.error(
+        `Unable to delete signal for ${symbol} due to error: ${error}`
+      );
+      return false;
+    }
+  }
 }
