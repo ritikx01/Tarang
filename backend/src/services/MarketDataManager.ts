@@ -10,6 +10,7 @@ import {
   indicatorRegistry,
   IndicatorTracker,
 } from "../indicators/indicatorRegistry";
+import { emaCrossingClose } from "./emaCrossingClose";
 
 type IndicatorMap = {
   [Entry in (typeof indicatorRegistry)[number] as Entry["key"]]: InstanceType<
@@ -208,6 +209,13 @@ class MarketDataManager {
 
     //Run algorithms
     this.algoManager.runAlgorithms(symbol, timeframe);
+    const ema9 = marketDataEntry.indicators["emaData"].getValue({ period: 9 });
+    const ema21 = marketDataEntry.indicators["emaData"].getValue({
+      period: 21,
+    });
+    if (ema9 <= ema21) {
+      emaCrossingClose.updateSignal(symbol, candleData, ema9, ema21);
+    }
   }
 
   public hasData(symbol: string, timeframe: Timeframe) {
