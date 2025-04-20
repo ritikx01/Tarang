@@ -7,6 +7,7 @@ import logger from "./utils/logger";
 import checkDBConnection from "./utils/checkDBconnection";
 import dotenv from "dotenv";
 import { createServer } from "./web/server";
+import { setUser } from "./web/services/jwt";
 
 export const prisma = new PrismaClient();
 export let broadcast: Broadcast;
@@ -14,7 +15,7 @@ export let signalManager: SignalManager;
 export let marketDataManager: MarketDataManager;
 
 dotenv.config();
-
+console.log(setUser("admin"));
 async function startPeriodicStaleSignalEvaluator() {
   await staleSignalEvaluator();
   setInterval(async () => {

@@ -231,16 +231,19 @@ export default class SignalManager {
         return false;
       }
       const id = this.activeSignalsStore[symbol].signalId;
-      delete this.activeSignalsStore[symbol];
-      await prisma.signal.delete({
-        where: { id },
-      });
-      logger.info(`Successfully removed Signal from DB for ${symbol} (${id})`);
       await prisma.outcome.deleteMany({
         where: { signalId: id },
       });
       logger.info(
         `Successfully removed all outcomes from DB for ${symbol} (${id})`
+      );
+      await prisma.signal.delete({
+        where: { id },
+      });
+      logger.info(`Successfully removed Signal from DB for ${symbol} (${id})`);
+      delete this.activeSignalsStore[symbol];
+      logger.info(
+        `Successfully removed Signal from memory for ${symbol} (${id})`
       );
       return true;
     } catch (error) {
