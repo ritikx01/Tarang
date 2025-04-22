@@ -246,5 +246,55 @@ class FetchKlineStream {
     this.closeAllWebsockets();
     logger.debug("Closed and cleaned up all WebSocket connections.");
   }
+
+  public async checkPingStatus(
+    timeout = 3000
+  ): Promise<
+    { key: string; url: string; status: "responsive" | "unresponsive" }[]
+  > {
+    const checks: Promise<{
+      key: string;
+      url: string;
+      status: "responsive" | "unresponsive";
+    }>[] = [];
+
+    for (const [key, ws] of this.websockets.entries()) {
+      const url = ws.url;
+
+      const pingPromise = new Promise<{
+        key: string;
+        url: string;
+        status: "responsive" | "unresponsive";
+      }>((resolve) => {
+        let responded = false;
+
+        const handlePong = () => {
+          responded = true;
+          resolve({ key, url, status: "responsive" });
+          ws.off("pong", handlePong);
+        };
+
+        ws.on("pong", handlePong);
+
+        try {
+          ws.ping();
+        } catch (err) {
+          resolve({ key, url, status: "unresponsive" });
+          return;
+        }
+
+        setTimeout(() => {
+          if (!responded) {
+            ws.off("pong", handlePong);
+            resolve({ key, url, status: "unresponsive" });
+          }
+        }, timeout);
+      });
+
+      checks.push(pingPromise);
+    }
+
+    return Promise.all(checks);
+  }
 }
 export default FetchKlineStream;
