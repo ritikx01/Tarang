@@ -321,6 +321,10 @@ function msToTime(ms: number): {
     seconds: seconds % 60,
   };
 }
+
+// Implement fix: Do not overrite an outcome.
+// Before evaluation, check if that signal is in memory or not
+// Add a SMART evaluation type
 async function staleSignalEvaluator(): Promise<void> {
   let staleSignals: StaleSignal[] = [];
   try {

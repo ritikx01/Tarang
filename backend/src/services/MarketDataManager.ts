@@ -1,8 +1,6 @@
-import MedianTracker from "../trackers/medianTracker";
 import logger from "../utils/logger";
 import fetchKlineData from "../data/fetchKlineData";
 import fetchSymbolList from "../data/fetchSymbolList";
-import EMATracker from "../trackers/emaTracker";
 import FetchKlineStream from "../data/fetchKlineStream";
 import AlgoManager from "./algoManager";
 import { KlineDataExtracted } from "../data/fetchKlineData";
@@ -74,7 +72,7 @@ function createIndicatorInstances(
 class MarketDataManager {
   // Make marketData private and add getter
   public marketData: MarketDataStore = {};
-  private fetchklineStream: FetchKlineStream;
+  public fetchklineStream: FetchKlineStream;
   private algoManager: AlgoManager;
 
   constructor() {
@@ -213,7 +211,7 @@ class MarketDataManager {
     const ema21 = marketDataEntry.indicators["emaData"].getValue({
       period: 21,
     });
-    if (ema9 <= ema21) {
+    if (candleData.openPrice <= ema21) {
       emaCrossingClose.updateSignal(symbol, candleData, ema9, ema21);
     }
   }
