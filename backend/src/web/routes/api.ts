@@ -7,6 +7,8 @@ import getActiveSingals from "../controllers/getActiveSignals";
 import getRulesToEvaluate from "../controllers/getRulesToEvaluate";
 import { checkAuth } from "../middlewares/checkAuth";
 import removeSignal from "../controllers/removeSignal";
+import getperiodicPerformance from "../controllers/analytics";
+import checkWsStatus from "../controllers/checkWsStatus";
 
 const apiRouter = express.Router();
 
@@ -18,4 +20,7 @@ apiRouter.get("/active-signals", getActiveSingals);
 apiRouter.get("/evaluation-rules", getRulesToEvaluate);
 
 apiRouter.post("/delete-signal", checkAuth, removeSignal);
+apiRouter.post("/performance", getperiodicPerformance);
+
+apiRouter.get("/check-ws-status", checkWsStatus);
 export default apiRouter;
