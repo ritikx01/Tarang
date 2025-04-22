@@ -30,7 +30,9 @@ async function startPeriodicStaleSignalEvaluator() {
 
 export async function main() {
   await checkDBConnection();
-  await startPeriodicStaleSignalEvaluator();
+  // Remove periodic run until fully fixed.
+  // await startPeriodicStaleSignalEvaluator();
+  await staleSignalEvaluator();
   broadcast = new Broadcast();
   signalManager = new SignalManager();
   marketDataManager = new MarketDataManager();
