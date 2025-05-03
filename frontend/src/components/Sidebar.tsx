@@ -95,9 +95,7 @@ export default function Sidebar() {
     <aside className="w-64 min-h-screen text-gray-100 shadow-lg flex flex-col p-4 border-slate-600 border-r-2 bg-slate-900 py-8">
       <a
         href="/dashboard"
-        className={`rounded-lg w-full text-left font-semibold p-2 hover:bg-slate-700 transition ${
-          isActive("/dashboard") ? "text-blue-400" : "text-white"
-        }`}
+        className={`rounded-lg w-full text-left font-semibold p-2 hover:bg-slate-700 transition text-white`}
         onClick={(e) => handleLinkClick(e, "/dashboard")}
       >
         Dashboard
@@ -122,10 +120,10 @@ export default function Sidebar() {
                   <a
                     href={item.path}
                     key={item.label}
-                    className={`block text-sm transition px-2 py-1 rounded ${
+                    className={`block text-sm transition px-2 py-1 rounded text-gray-400 ${
                       isActive(item.path)
-                        ? "text-blue-400 font-medium bg-slate-700"
-                        : "text-gray-400 hover:text-white hover:bg-slate-700"
+                        ? " font-medium bg-slate-700"
+                        : " hover:text-white hover:bg-slate-700"
                     }`}
                     onClick={(e) => handleLinkClick(e, item.path)}
                   >

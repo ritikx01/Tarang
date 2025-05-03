@@ -32,7 +32,7 @@ function NavBar() {
                 </Link>
                 <a
                   className="rounded-lg hover:bg-slate-700 p-2 px-3"
-                  href="https://github.com/ritikx01/signal_algo"
+                  href="https://github.com/ritikx01/Tarang"
                   target="_blank"
                 >
                   <GitHub />
