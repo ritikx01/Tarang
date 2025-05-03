@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { signalManager } from "../../index";
 import logger from "../../utils/logger";
+import { cooldownService } from "../../services/cooldownService";
 
 async function removeSignal(req: Request, res: Response) {
   const symbol = req.body.symbol;
@@ -12,6 +13,7 @@ async function removeSignal(req: Request, res: Response) {
   try {
     const isRemoved = await signalManager.removeSignal(symbol);
     if (isRemoved) {
+      cooldownService.checkCooldown(symbol, Date.now());
       res
         .status(200)
         .json({ msg: `Successfully removed the active signal for ${symbol}` });
