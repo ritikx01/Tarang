@@ -22,7 +22,7 @@ const performanceIntervals: readonly PerformanceInterval[] = [
 ] as const;
 
 interface OutcomeWithSignalOpen extends Outcome {
-  signal: { symbol: string; open: number } | null;
+  signal: { symbol: string; close: number } | null;
 }
 
 interface PeriodSummary {
@@ -104,6 +104,7 @@ function calculateDateRange(
   return { startDate, endDate };
 }
 
+// Implement timeframe based fetching
 async function fetchOutcomeData(
   startDate: Date,
   endDate: Date
@@ -116,14 +117,21 @@ async function fetchOutcomeData(
       completedAt: { gte: startDate, lt: endDate },
     },
     include: {
-      signal: { select: { symbol: true, open: true } },
+      signal: { select: { symbol: true, close: true } },
     },
     orderBy: { completedAt: "asc" },
   });
   logger.info(`Fetched ${outcomes.length} outcomes.`);
-  return outcomes as OutcomeWithSignalOpen[]; // Cast assuming include works
+  return outcomes as OutcomeWithSignalOpen[];
 }
-
+const currDate = new Date();
+const currYear = getYear(currDate);
+const intervalCountMapping = {
+  D: [1, 32],
+  W: [1, 54],
+  M: [1, 13], //Month indexing starts from 0
+  Y: [currYear - 4, currYear + 6],
+};
 function aggregatePerformanceData(
   outcomes: OutcomeWithSignalOpen[],
   interval: PerformanceInterval
@@ -131,9 +139,9 @@ function aggregatePerformanceData(
   const ruleMap: RuleMap = { SMART: {}, NORMAL: {} };
 
   for (const outcome of outcomes) {
-    if (!outcome.signal || outcome.signal.open <= 0) continue;
+    if (!outcome.signal || outcome.signal.close <= 0) continue;
 
-    const assetEntryPrice = outcome.signal.open;
+    const assetEntryPrice = outcome.signal.close;
     let assetExitPrice: number | null = null;
 
     if (outcome.evalType === EvalType.SMART) {
@@ -194,7 +202,7 @@ function aggregatePerformanceData(
       outcome.signal.symbol,
       outcome.completedAt.getDate(),
       outcome.completedAt.getMonth() + 1,
-      outcome.signal.open,
+      outcome.signal.close,
       outcome.targetPrice,
       currentPeriodData
     );
@@ -217,7 +225,21 @@ function aggregatePerformanceData(
       }
 
       periodSummaries.sort((a, b) => a.index - b.index);
-      results[evalType][ruleID] = periodSummaries;
+
+      const dataMap = new Map();
+      periodSummaries.forEach((item) => {
+        dataMap.set(item.index, item.value);
+      });
+      const length: Record<number, number> = intervalCountMapping[interval];
+
+      const completeChartData: PeriodSummary[] = [];
+      for (let i = length[0]; i < length[1]; i++) {
+        completeChartData.push({
+          index: i,
+          value: dataMap.has(i) ? dataMap.get(i).toFixed(2) : 0,
+        });
+      }
+      results[evalType][ruleID] = completeChartData;
     }
   }
   return results;
@@ -236,10 +258,22 @@ async function getPeriodicPerformance(req: Request, res: Response) {
     const outcomes = await fetchOutcomeData(startDate, endDate);
 
     if (outcomes.length === 0) {
+      const [start, end] = intervalCountMapping[interval];
+      const periods: PeriodSummary[] = [];
+
+      for (let i = start; i < end; i++) {
+        periods.push({ index: i, value: 0 });
+      }
+
+      const response = {
+        NORMAL: { 1: periods },
+        SMART: { 1: periods },
+      };
+
       logger.info(
         `No outcomes found for interval ${interval} between ${startDate.toISOString()} and ${endDate.toISOString()}`
       );
-      res.status(200).json({ NORMAL: {}, SMART: {} });
+      res.status(200).json(response);
       return;
     }
 
