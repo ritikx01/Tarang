@@ -8,6 +8,7 @@ interface ChartDataPoint {
   index: number;
   value: number;
 }
+const intervalCountMapping = { D: 31, W: 53, M: 12, Y: 10 };
 const backend = import.meta.env.VITE_BACKEND_BASE_URL;
 export type PerformanceInterval = "D" | "W" | "M" | "Y";
 
@@ -27,7 +28,7 @@ async function fetchChartData(
     }),
   });
   const parsedResp = await response.json();
-  return parsedResp["NORMAL"][1];
+  return parsedResp["SMART"][1];
 }
 
 type FormContextType = {
@@ -48,7 +49,18 @@ function DashboardPage() {
     // This inner function can be async
     async function loadData() {
       try {
-        const data = await fetchChartData(interval, startTime);
+        const count = intervalCountMapping[interval] || 0;
+        const data =
+          (await fetchChartData(interval, startTime)) ||
+          Array.from({ length: count }, (_, index) => ({
+            index:
+              interval === "D"
+                ? index + 1
+                : interval === "Y"
+                ? new Date().getFullYear() - (new Date().getFullYear() % 10)
+                : index,
+            value: 0,
+          }));
         setChartData(data);
       } catch (error) {
         console.error("Failed to fetch chart data:", error);
