@@ -10,20 +10,6 @@ interface ChartDataPoint {
 }
 const backend = import.meta.env.VITE_BACKEND_BASE_URL;
 export type PerformanceInterval = "D" | "W" | "M" | "Y";
-const dummy = [
-  { index: 1, value: 85 },
-  { index: 2, value: -30 },
-  { index: 3, value: 50 },
-  { index: 4, value: -65 },
-  { index: 5, value: 2 },
-  { index: 6, value: 56 },
-  { index: 7, value: 23 },
-  { index: 8, value: 27 },
-  { index: 9, value: -9 },
-  { index: 10, value: -46 },
-  { index: 11, value: -8 },
-  { index: 12, value: 20 },
-];
 
 async function fetchChartData(
   period: PerformanceInterval,
@@ -57,19 +43,15 @@ function DashboardPage() {
   const [interval, setIntervalValue] = useState<PerformanceInterval>("D");
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [startTime, setStartTime] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // This inner function can be async
     async function loadData() {
-      setIsLoading(true);
       try {
         const data = await fetchChartData(interval, startTime);
         setChartData(data);
       } catch (error) {
         console.error("Failed to fetch chart data:", error);
-      } finally {
-        setIsLoading(false);
       }
     }
 

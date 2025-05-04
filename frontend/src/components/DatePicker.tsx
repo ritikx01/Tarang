@@ -18,7 +18,7 @@ export function DatePicker() {
     throw new Error("SetIntervalValueContext is not available");
   }
 
-  const { interval, setIntervalValue, startTime, setStartTime } = context;
+  const { setStartTime } = context;
   const [date, setDate] = useState<Date | undefined>(new Date());
   useEffect(() => {
     setStartTime(date ?? new Date());

@@ -1,6 +1,6 @@
 import NavBar from "./components/NavBar";
 import DashboardPage from "./pages/PeriodicPerformance";
-import { ReactLenis, useLenis } from "lenis/react";
+import { ReactLenis } from "lenis/react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -69,7 +69,6 @@ const router = createBrowserRouter([
 
 function App() {
   document.documentElement.classList.toggle("dark", true);
-  const lenis = useLenis(({ scroll }) => {});
   return (
     <ReactLenis root>
       <RouterProvider router={router} />

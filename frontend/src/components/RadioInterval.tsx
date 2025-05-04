@@ -22,7 +22,7 @@ function RadioInterval() {
   if (!context) {
     throw new Error("SetIntervalValueContext is not available");
   }
-  const { interval, setIntervalValue, startTime, setStartTime } = context;
+  const { interval, setIntervalValue } = context;
 
   const handleChange = (value: string) => {
     setIntervalValue(value as PerformanceInterval); // lift change up

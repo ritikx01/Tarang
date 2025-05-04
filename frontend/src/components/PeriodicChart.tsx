@@ -15,9 +15,6 @@ import {
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { PerformanceInterval } from "@/pages/PeriodicPerformance";
 
-const GREEN_HSL_BASE = "var(--chart-2)"; // A clear, medium-dark green
-const RED_HSL_BASE = "var(--chart-1)"; // A strong, medium-light red
-
 const GREEN_START = "rgba(46, 204, 113, 0.8)"; // Light green
 const GREEN_END = "rgba(46, 204, 113, 0.5)"; // Medium-dark green
 const RED_START = "rgba(231, 76, 60, 0.5)"; // Light red
@@ -27,11 +24,6 @@ const POSITIVE_COLOR_FROM = GREEN_START;
 const POSITIVE_COLOR_TO = GREEN_END;
 const NEGATIVE_COLOR_FROM = RED_START;
 const NEGATIVE_COLOR_TO = RED_END;
-
-// const POSITIVE_COLOR_FROM = `hsl(${GREEN_HSL_BASE} / 0.8)`;
-// const POSITIVE_COLOR_TO = `hsl(${GREEN_HSL_BASE})`;
-// const NEGATIVE_COLOR_FROM = `hsl(${RED_HSL_BASE} / 0.8)`;
-// const NEGATIVE_COLOR_TO = `hsl(${RED_HSL_BASE})`;
 
 const intervalTypeValueMapping: Partial<Record<PerformanceInterval, string>> = {
   D: "Day",
