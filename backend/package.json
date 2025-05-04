@@ -14,7 +14,6 @@
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.2",
     "@prisma/client": "^6.5.0",
-    "@types/cors": "^2.8.17",
     "async-mutex": "^0.5.0",
     "axios": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -31,6 +30,7 @@
   "devDependencies": {
     "@types/axios": "^0.9.36",
     "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
     "@types/date-fns": "^2.5.3",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
