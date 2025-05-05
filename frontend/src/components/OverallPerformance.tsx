@@ -9,9 +9,9 @@ import {
   Info,
   RefreshCw,
 } from "lucide-react";
-
+const backend = import.meta.env.VITE_BACKEND_BASE_URL;
 async function getOverallData() {
-  const response = await fetch("http://localhost:3000/api/performance/overall");
+  const response = await fetch(`${backend}/api/performance/overall`);
   const data = await response.json();
   return data;
 }
