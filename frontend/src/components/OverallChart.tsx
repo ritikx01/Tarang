@@ -107,7 +107,7 @@ export const ChartComponent = (props: ChartComponentProps) => {
       });
       // Set only the required AreaData properties for plotting
       const chartData: BaselineData<number>[] = data.map(({ time, value }) => ({
-        time,
+        time: time + 1,
         value,
       }));
       newSeries.setData(chartData);
