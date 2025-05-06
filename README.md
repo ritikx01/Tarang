@@ -49,20 +49,27 @@ The following metrics and indicators are used to evaluate trade entry and exit o
 
 ---
 
+<div align="center">
+
 ## Architecture
 
+</div>
 This is a rough sketch of the initial project.  
 The project is being updated continuously so this might be a bit outdated but easy to understand. It'll be updated very soon
 
 ![Architecture sketch](assets/architecture_sketch.png)
 
+<div align="center">
+
 ## Showcase
 
-Dashboard - Active signals
+</div>
+<b>Dashboard</b> - Active signals
+
 ![Dashboard](assets/dashboard.png)
 
-Overarll Performance
-![aOverarll Performance](assets/overall-performance.png)
+<b>Overall Performance</b>
+![Overarll Performance](assets/overall-performance.png)
 
 ## Installation and running locally
 
@@ -92,9 +99,11 @@ The docker build file is included in the backend directory.
    Or
 5. Compile the application `npm run build`.
 6. Serve with your choice of server(nginx, apache) or deploy on cloud providers (netlify, vercel)
+<div align="center">
 
 ## Backend breakdown
 
+</div>
 #### 1. Market Data Pipeline (`/data`)
 
 ```mermaid
@@ -115,6 +124,7 @@ graph LR
   - Singleton pattern for global state management
   - Real-time candlestick processing
   - Memory-efficient sliding window implementation
+  - Plugin like indicator and filters implementation
 
 #### 2. Technical Analysis Engine (`/indicators`, `/trackers`)
 
@@ -183,3 +193,22 @@ graph TB
    - Structured error logging
    - Automatic WebSocket reconnection
    - Transaction management for DB operations
+
+---
+
+### Insights
+
+> 💬 I uploaded this project to an LLM for review. Below are the conversation links with technical insights, critiques, and potential improvements.
+
+- [Gemini review](https://aistudio.google.com/app/prompts?state={"ids":["1p1qOFo63Ufwr1A8efSTlAulEVGVNbcJJ"],"action":"open","userId":"116587489921489628172","resourceKeys":{}}&usp=sharing)
+- [Grok review](https://grok.com/share/c2hhcmQtMg%3D%3D_0d2717d9-c387-489a-8c07-2bc7e7a89f0e)
+
+---
+
+## To-do
+
+- [ ] Reduce Noise
+- [ ] Add FAQ section
+- [ ] Complete docs
+- [ ] Add more Dashboard analytics
+- [ ] Port to Go
