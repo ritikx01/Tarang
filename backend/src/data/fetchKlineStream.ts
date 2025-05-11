@@ -11,7 +11,7 @@ const WS_URL = "wss://fstream.binance.com/ws";
 function getSymbolPath(
   symbols: string[],
   timeframe: Timeframe,
-  chunkSize = 200
+  chunkSize = 500
 ) {
   return Array.from(
     { length: Math.ceil(symbols.length / chunkSize) },
@@ -158,12 +158,6 @@ class FetchKlineStream {
         reason: reason.toString(),
         wasClean: code === 1000 || code === 1001,
       });
-      try {
-        ws.terminate();
-        logger.info(`Closed WebSocket connection for ${symbolPath}`);
-      } catch (error) {
-        logger.error(`Failed to close WebSocket for ${symbolPath}:`, error);
-      }
       this.websockets.delete(symbolPath);
       this.scheduleReconnect(symbolPath);
     });
