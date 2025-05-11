@@ -3,6 +3,7 @@ import { Timeframe } from "./MarketDataManager";
 import { AddCandleData } from "./MarketDataManager";
 import { prisma } from "../index";
 import { $Enums } from "@prisma/client";
+import { emaCrossingClose } from "./emaCrossingClose";
 
 interface SignalRules {
   [id: number]: [number, number];
@@ -104,6 +105,7 @@ export default class SignalManager {
         signalId: signal.id,
       };
 
+      emaCrossingClose.addSignal(symbol, timeframe, candleData, signal.id);
       logger.info(
         `Added BUY signal for ${symbol} at price ${candleData.closePrice}`
       );

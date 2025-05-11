@@ -8,7 +8,6 @@ import { cooldownService } from "./cooldownService";
 import sendToDiscord, { DiscordSignal } from "./sendToDiscord";
 import multiplier from "../algorithmicStrats/multiplier";
 import atrPriceRatio from "../algorithmicStrats/atrPriceRatio";
-import { emaCrossingClose } from "./emaCrossingClose";
 
 export type Algorithm = (data: string, timeframe: Timeframe) => boolean;
 
@@ -75,7 +74,6 @@ class AlgoManager {
       marketDataManager.getCandleData(symbol, timeframe)
     );
     logger.info(`All algorithms passed for ${symbol} ${timeframe}`);
-    emaCrossingClose.addSignal(symbol);
     return true;
   }
 }

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 
-// Type definitions
 interface SignalInfo {
   timeframe: Timeframe;
   candleData: AddCandleData;
-  rulesEvaluationResult: Map<number, SignalResultType>;
   signalId: string;
 }
 
@@ -20,9 +18,6 @@ interface AddCandleData {
   volume: number;
   closingTimestamp: number;
 }
-
-// We don't use this, but TypeScript needs it for the Map type
-type SignalResultType = any;
 
 interface ActiveSignalsResponse {
   "active-signals": Record<string, SignalInfo>;
@@ -59,15 +54,10 @@ export default function ActiveTrades() {
     };
 
     fetchActiveSignals();
-
-    // Set up periodic refresh (every 30 seconds)
     const intervalId = setInterval(fetchActiveSignals, 30000);
-
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  // Format timestamp to a readable date/time
   const formatTimestamp = (timestamp: number): string => {
     return new Date(timestamp).toLocaleString();
   };

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { signalManager } from "../../index";
+import { emaCrossingClose } from "../../services/emaCrossingClose";
 
 function getActiveSingals(req: Request, res: Response) {
-  const activeSignals = signalManager.getActiveSignals();
+  const activeSignals = emaCrossingClose.getActiveSignals();
   res.status(200).json({ "active-signals": activeSignals });
   return;
 }

@@ -1,13 +1,11 @@
 import { Timeframe, AddCandleData } from "./MarketDataManager";
 import { prisma } from "../index";
 import { $Enums } from "@prisma/client";
-import { signalManager } from "../index";
 
 export type SignalResultType = -1 | 0 | 1;
-interface SignalInfo {
+interface SMARTSignalInfo {
   timeframe: Timeframe;
   candleData: AddCandleData;
-  rulesEvaluationResult: Map<number, SignalResultType>;
   signalId: string;
 }
 interface SignalToDB {
@@ -24,19 +22,24 @@ interface SignalToDB {
 }
 class EMACrossingClose {
   private activeSignalsStore: Set<string>;
-  private getActiveSignalsStore: Record<string, SignalInfo> = {};
+  private getActiveSignalsStore: Record<string, SMARTSignalInfo> = {};
   constructor() {
     this.activeSignalsStore = new Set();
   }
-  public addSignal(symbol: string) {
+  public addSignal(
+    symbol: string,
+    timeframe: Timeframe,
+    candleData: AddCandleData,
+    signalId: string
+  ) {
     if (this.getActiveSignalsStore[symbol]) {
       return;
     }
     this.activeSignalsStore.add(symbol);
-    this.getActiveSignalsStore[symbol] =
-      signalManager.getActiveSignals()[symbol];
+    this.getActiveSignalsStore[symbol] = { timeframe, candleData, signalId };
     console.log(`NEW SMART SIGNAL FOR: ${symbol}`);
   }
+
   public async updateSignal(
     symbol: string,
     candleData: AddCandleData,
@@ -68,6 +71,9 @@ class EMACrossingClose {
     console.log(`CLOSED SMART FOR ${symbol}`);
     await prisma.outcome.create(result);
     delete this.getActiveSignalsStore[symbol];
+  }
+  public getActiveSignals() {
+    return this.getActiveSignalsStore;
   }
 }
 
