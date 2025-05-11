@@ -31,6 +31,15 @@ View it's performance over at the [Dashboard](https://tarang.ritik.dev/dashboard
 
 ---
 
+### Insights
+
+> 💬 I uploaded this project to an LLM for review. Below are the conversation links with technical insights, critiques, and potential improvements.
+
+- [Gemini review](https://aistudio.google.com/app/prompts?state={"ids":["1p1qOFo63Ufwr1A8efSTlAulEVGVNbcJJ"],"action":"open","userId":"116587489921489628172","resourceKeys":{}}&usp=sharing)
+- [Grok review](https://grok.com/share/c2hhcmQtMg%3D%3D_0d2717d9-c387-489a-8c07-2bc7e7a89f0e)
+
+---
+
 ## 📊 Trade Initialization Criteria
 
 The following metrics and indicators are used to evaluate trade entry and exit opportunities:
@@ -193,15 +202,6 @@ graph TB
    - Structured error logging
    - Automatic WebSocket reconnection
    - Transaction management for DB operations
-
----
-
-### Insights
-
-> 💬 I uploaded this project to an LLM for review. Below are the conversation links with technical insights, critiques, and potential improvements.
-
-- [Gemini review](https://aistudio.google.com/app/prompts?state={"ids":["1p1qOFo63Ufwr1A8efSTlAulEVGVNbcJJ"],"action":"open","userId":"116587489921489628172","resourceKeys":{}}&usp=sharing)
-- [Grok review](https://grok.com/share/c2hhcmQtMg%3D%3D_0d2717d9-c387-489a-8c07-2bc7e7a89f0e)
 
 ---
 
