@@ -1,10 +1,10 @@
 import WebSocket from "ws";
 import logger from "../utils/logger";
-import { Mutex } from "async-mutex";
 import { marketDataManager } from "..";
 import { AddCandleData } from "../services/MarketDataManager";
 import { Timeframe } from "../services/MarketDataManager";
 import { signalManager } from "../index";
+import * as schedule from "node-schedule";
 
 const WS_URL = "wss://fstream.binance.com/ws";
 
@@ -38,33 +38,33 @@ interface KlineInfo {
 
 // To-do Use global timeout manager from MarketDataManager class instead of a local storage
 class FetchKlineStream {
-  private activeConnections = 0;
-  // Remove mutex lock by storing all ws instances in an array
-  private mutex = new Mutex();
   private reconnectAttempts: Map<string, number> = new Map();
   private static readonly MAX_RECONNECT_ATTEMPTS = 5;
   private static readonly RECONNECT_DELAY_BASE = 1000;
   private websockets: Map<string, WebSocket> = new Map();
   private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private cleanupJob: schedule.Job | null = null;
 
-  constructor() {}
-  public async registerConnection() {
-    const release = await this.mutex.acquire();
-    this.activeConnections++;
-    release();
+  // Consider implementing cleanupJob cancellation method
+  constructor() {
+    const rule = new schedule.RecurrenceRule();
+    rule.hour = 0;
+    rule.minute = 1;
+    rule.tz = "Etc/UTC";
+    this.cleanupJob = schedule.scheduleJob(rule, () => this.executeCleanup());
   }
 
-  public async handleDisconnection() {
-    const release = await this.mutex.acquire();
+  // Check for race condition between cleanup and ws reconnection
+  private async executeCleanup() {
     try {
-      this.activeConnections--;
-      if (this.activeConnections === 0) {
-        logger.info("All connections closed.");
-        this.cleanup();
-        marketDataManager.cleanMarketDataManager();
-      }
-    } finally {
-      release();
+      this.clearAllReconnectTimeouts();
+      logger.info("Cleared all reconnection timeouts");
+
+      logger.info("Starting websocket cleanup.");
+      this.cleanup();
+      await marketDataManager.cleanMarketDataManager();
+    } catch (error) {
+      logger.error("Error during websocket cleanup:", error);
     }
   }
 
@@ -92,7 +92,6 @@ class FetchKlineStream {
       logger.info(`For WS URL: ${wsURL}`);
       reconnectAttempts = 0;
       this.reconnectAttempts.set(symbolPath, reconnectAttempts);
-      this.registerConnection();
     });
 
     ws.on("message", (data) => {
@@ -152,14 +151,17 @@ class FetchKlineStream {
       }
     });
 
-    // Add a retry logic if the disconnect is not the 24 hour disconnect
-    // Graceful disconnect might not pe periodic 24h
-    // Disconnnect might be due to binance server maintainance
     ws.on("close", () => {
       logger.warn(`WebSocket closed`);
       logger.debug(`For: ${wsURL}`);
+      try {
+        ws.terminate();
+        logger.info(`Closed WebSocket connection for ${symbolPath}`);
+      } catch (error) {
+        logger.error(`Failed to close WebSocket for ${symbolPath}:`, error);
+      }
       this.websockets.delete(symbolPath);
-      this.handleDisconnection();
+      this.scheduleReconnect(symbolPath);
     });
 
     ws.on("error", (err) => {
@@ -188,8 +190,6 @@ class FetchKlineStream {
 
       clearTimeout(this.reconnectTimeouts.get(symbolPath));
       this.reconnectTimeouts.delete(symbolPath);
-
-      await this.handleDisconnection();
       return;
     }
 
@@ -235,18 +235,17 @@ class FetchKlineStream {
   private cleanup() {
     logger.debug("Cleaning up FetchKlineStream...");
 
-    this.activeConnections = 0;
-    logger.debug("Reset activeConnections to 0.");
+    this.clearAllReconnectTimeouts();
+    logger.debug("Cleared all reconnection timeouts.");
 
     this.reconnectAttempts.clear();
     logger.debug("Cleared all reconnection attempts.");
-
-    this.clearAllReconnectTimeouts();
 
     this.closeAllWebsockets();
     logger.debug("Closed and cleaned up all WebSocket connections.");
   }
 
+  // Potential memory leaks in pong handlers, consider using a setTimeout to clear
   public async checkPingStatus(
     timeout = 3000
   ): Promise<

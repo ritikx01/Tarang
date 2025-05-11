@@ -23,6 +23,7 @@
     "express": "^4.21.2",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "node-schedule": "^2.1.1",
     "redis": "^4.7.0",
     "winston": "^3.17.0",
     "ws": "^8.18.0"
@@ -35,6 +36,7 @@
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.10.1",
+    "@types/node-schedule": "^2.1.7",
     "@types/ws": "^8.5.13",
     "prisma": "^6.5.0",
     "tsx": "^4.19.2",

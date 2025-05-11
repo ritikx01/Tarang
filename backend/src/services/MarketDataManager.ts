@@ -158,9 +158,9 @@ class MarketDataManager {
     }
   }
 
-  public cleanMarketDataManager() {
+  public async cleanMarketDataManager() {
     try {
-      this.initializeMarketDataManager();
+      await this.initializeMarketDataManager();
       logger.info("Market Data Manager re-initialized successfully");
     } catch (error) {
       logger.error("Failed to re-initialize market data manager", {
