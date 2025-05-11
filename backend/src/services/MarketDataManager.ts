@@ -211,7 +211,7 @@ class MarketDataManager {
     const ema21 = marketDataEntry.indicators["emaData"].getValue({
       period: 21,
     });
-    if (candleData.openPrice <= ema21) {
+    if (candleData.closePrice <= ema21) {
       emaCrossingClose.updateSignal(symbol, candleData, ema9, ema21);
     }
   }
