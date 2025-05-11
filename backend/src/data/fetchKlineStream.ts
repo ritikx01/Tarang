@@ -151,9 +151,13 @@ class FetchKlineStream {
       }
     });
 
-    ws.on("close", () => {
-      logger.warn(`WebSocket closed`);
-      logger.debug(`For: ${wsURL}`);
+    ws.on("close", (code, reason) => {
+      logger.warn({
+        message: `WebSocket closed for ${symbolPath.slice(0, 20)}`,
+        code,
+        reason: reason.toString(),
+        wasClean: code === 1000 || code === 1001,
+      });
       try {
         ws.terminate();
         logger.info(`Closed WebSocket connection for ${symbolPath}`);
