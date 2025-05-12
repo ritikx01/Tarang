@@ -44,8 +44,8 @@ class FetchKlineStream {
   private websockets: Map<string, WebSocket> = new Map();
   private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private cleanupJob: schedule.Job | null = null;
+  private isInCleanup: boolean = false;
 
-  // Consider implementing cleanupJob cancellation method
   constructor() {
     const rule = new schedule.RecurrenceRule();
     rule.hour = 0;
@@ -57,14 +57,25 @@ class FetchKlineStream {
   // Check for race condition between cleanup and ws reconnection
   private async executeCleanup() {
     try {
+      logger.info("Starting websocket cleanup process");
+      this.isInCleanup = true;
+      
       this.clearAllReconnectTimeouts();
       logger.info("Cleared all reconnection timeouts");
 
       logger.info("Starting websocket cleanup.");
       this.cleanup();
       await marketDataManager.cleanMarketDataManager();
+      
+      // Wait for all cleanup operations to complete
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      // Reset cleanup flag and reinitialize
+      this.isInCleanup = false;
+      logger.info("Cleanup completed, ready for new connections");
     } catch (error) {
       logger.error("Error during websocket cleanup:", error);
+      this.isInCleanup = false;
     }
   }
 
@@ -175,6 +186,12 @@ class FetchKlineStream {
     });
   }
   private async scheduleReconnect(symbolPath: string) {
+    // Don't reconnect if we're in cleanup
+    if (this.isInCleanup) {
+      logger.info(`Skipping reconnection for ${symbolPath} during cleanup`);
+      return;
+    }
+
     let reconnectAttempts = this.reconnectAttempts.get(symbolPath) || 0;
 
     if (
@@ -202,7 +219,11 @@ class FetchKlineStream {
     );
 
     const timeout = setTimeout(() => {
-      this.connect(symbolPath);
+      if (!this.isInCleanup) {
+        this.connect(symbolPath);
+      } else {
+        logger.info(`Cancelled reconnection for ${symbolPath} due to cleanup`);
+      }
     }, delay);
     logger.debug(
       `Scheduled reconnection for ${symbolPath} with delay ${delay}ms`
@@ -213,6 +234,9 @@ class FetchKlineStream {
   private closeAllWebsockets() {
     for (const [symbolPath, ws] of this.websockets.entries()) {
       try {
+        // Remove close/error handlers before terminating to prevent auto-reconnect
+        ws.removeAllListeners('close');
+        ws.removeAllListeners('error');
         ws.terminate();
         logger.info(`Closed WebSocket connection for ${symbolPath}`);
       } catch (error) {
