@@ -23,64 +23,17 @@ interface ChartDataOverall extends ChartData {
 export default function OverallPerformance() {
   const [chartData, setChartData] = useState<ChartDataOverall[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [overallStats, setOverallStats] = useState({
-    totalTrades: 0,
-    positiveCount: 0,
-    negativeCount: 0,
-    avgGain: 0,
-    avgLoss: 0,
-    totalChange: 0,
-  });
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
         const data: ChartDataOverall[] = await getOverallData();
-        // Add the original index as tradeIndex to each item
         const dataWithTradeIndex = data.map((item, index) => ({
           ...item,
           tradeIndex: index + 1,
         }));
         setChartData(dataWithTradeIndex);
-
-        // Calculate overall stats
-        const totalTrades = dataWithTradeIndex.length;
-        const positiveCount = dataWithTradeIndex.filter(
-          (item) => item.change > 0
-        ).length;
-        const negativeCount = dataWithTradeIndex.filter(
-          (item) => item.change < 0
-        ).length;
-
-        const positives = dataWithTradeIndex.filter((item) => item.change > 0);
-        const negatives = dataWithTradeIndex.filter((item) => item.change < 0);
-
-        const avgGain =
-          positives.length > 0
-            ? positives.reduce((sum, item) => sum + item.change, 0) /
-              positives.length
-            : 0;
-
-        const avgLoss =
-          negatives.length > 0
-            ? negatives.reduce((sum, item) => sum + item.change, 0) /
-              negatives.length
-            : 0;
-
-        const totalChange = dataWithTradeIndex.reduce(
-          (sum, item) => sum + item.change,
-          0
-        );
-
-        setOverallStats({
-          totalTrades,
-          positiveCount,
-          negativeCount,
-          avgGain,
-          avgLoss,
-          totalChange,
-        });
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -89,7 +42,48 @@ export default function OverallPerformance() {
     }
     fetchData();
   }, []);
+  const overallStats = useMemo(() => {
+    if (chartData.length === 0) {
+      return {
+        totalTrades: 0,
+        positiveCount: 0,
+        negativeCount: 0,
+        avgGain: 0,
+        avgLoss: 0,
+        totalChange: 0,
+      };
+    }
+    const totalTrades = chartData.length;
 
+    const positives = chartData.filter((item) => item.change > 0);
+    const negatives = chartData.filter((item) => item.change < 0);
+
+    const positiveCount = positives.length;
+    const negativeCount = negatives.length;
+
+    const avgGain =
+      positives.length > 0
+        ? positives.reduce((sum, item) => sum + item.change, 0) /
+          positives.length
+        : 0;
+
+    const avgLoss =
+      negatives.length > 0
+        ? negatives.reduce((sum, item) => sum + item.change, 0) /
+          negatives.length
+        : 0;
+
+    const totalChange = chartData.reduce((sum, item) => sum + item.change, 0);
+
+    return {
+      totalTrades,
+      positiveCount,
+      negativeCount,
+      avgGain,
+      avgLoss,
+      totalChange,
+    };
+  }, [chartData]);
   const topGainers: ChartDataOverall[] = useMemo(() => {
     return [...chartData].sort((a, b) => b.change - a.change).slice(0, 5);
   }, [chartData]);
